@@ -24,7 +24,7 @@ export default function Home() {
         }
       `}} />
 
-      {/* 1. NAVIGATION BAR */}
+      {/* 1. NAVIGATION BAR (Imerudishwa na Menu Zote) */}
       <nav className="fixed w-full bg-white/90 backdrop-blur-md border-b border-slate-200 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
@@ -37,12 +37,17 @@ export default function Home() {
 
             <div className="hidden md:flex space-x-8">
               <Link href="#services" className="text-slate-600 hover:text-blue-600 font-medium transition">Services</Link>
-              <Link href="/client-portal" className="text-slate-600 hover:text-blue-600 font-medium transition">Client Portal</Link>
+              <Link href="/book" className="text-slate-600 hover:text-blue-600 font-medium transition">Book Now</Link>
+              <Link href="/parts" className="text-slate-600 hover:text-blue-600 font-medium transition">Spare Parts</Link>
+              <Link href="/contact" className="text-slate-600 hover:text-blue-600 font-medium transition">Contact</Link>
             </div>
 
             <div className="flex items-center space-x-4">
-              <Link href="/login" className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-slate-800 transition shadow-md flex items-center gap-2">
-                System Login <ArrowRight size={18} />
+              <Link href="/login" className="hidden md:block text-slate-600 hover:text-blue-600 font-semibold transition">
+                System Login
+              </Link>
+              <Link href="/client-portal" className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-slate-800 transition shadow-md flex items-center gap-2">
+                Client Portal <ArrowRight size={18} />
               </Link>
             </div>
           </div>
@@ -76,7 +81,9 @@ export default function Home() {
           <div className="flex justify-center pt-6">
             <div className="flex flex-wrap justify-center gap-6 text-slate-200 font-medium">
               <span className="flex items-center gap-2"><CheckCircle2 className="text-blue-400" size={20}/> Expert Mechanics</span>
-              <span className="flex items-center gap-2"><CheckCircle2 className="text-blue-400" size={20}/> Genuine Parts</span>
+              <Link href="/parts" className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer border-b border-transparent hover:border-blue-400">
+                <CheckCircle2 className="text-blue-400" size={20}/> Genuine Parts
+              </Link>
               <span className="flex items-center gap-2"><CheckCircle2 className="text-blue-400" size={20}/> Modern Diagnostics</span>
             </div>
           </div>
@@ -109,7 +116,7 @@ export default function Home() {
             <div className="flex w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/subaru/slate-400" alt="Subaru Logo" className="h-8 w-auto max-w-[150px] grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
             <div className="flex w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/ford/slate-400" alt="Ford Logo" className="h-10 w-auto max-w-[150px] grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
 
-            {/* Seti ya Pili (Ili iweze kuzunguka bila kukata) */}
+            {/* Seti ya Pili */}
             <div className="flex w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/toyota/slate-400" alt="Toyota Logo" className="h-10 w-auto max-w-[150px] grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
             <div className="flex w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/nissan/slate-400" alt="Nissan Logo" className="h-10 w-auto max-w-[150px] grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
             <div className="flex w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/honda/slate-400" alt="Honda Logo" className="h-10 w-auto max-w-[150px] grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
@@ -121,7 +128,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. SERVICES SECTION (Imerudishwa Kama Ilivyokuwa) */}
+      {/* 4. SERVICES SECTION (Vitufe vimewekwa virudi kwenda /book) */}
       <section id="services" className="py-24 bg-slate-50 border-y border-slate-100 flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -136,7 +143,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">General Repair</h3>
               <p className="text-slate-600 mb-8 flex-1">Engine tuning, brake replacement, suspension work, and complete mechanical overhauls.</p>
-              <Link href="/login" className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 rounded-xl hover:border-blue-600 hover:bg-blue-600 hover:text-white transition-all flex justify-center items-center gap-2">
+              <Link href="/book" className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 rounded-xl hover:border-blue-600 hover:bg-blue-600 hover:text-white transition-all flex justify-center items-center gap-2">
                 <Calendar size={18} /> Book Now
               </Link>
             </div>
@@ -147,7 +154,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Computer Diagnostics</h3>
               <p className="text-slate-600 mb-8 flex-1">Advanced OBD2 scanning, electrical system troubleshooting, and ECU programming.</p>
-              <Link href="/login" className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 rounded-xl hover:border-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex justify-center items-center gap-2">
+              <Link href="/book" className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 rounded-xl hover:border-emerald-600 hover:bg-emerald-600 hover:text-white transition-all flex justify-center items-center gap-2">
                 <Calendar size={18} /> Book Now
               </Link>
             </div>
@@ -158,7 +165,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Routine Maintenance</h3>
               <p className="text-slate-600 mb-8 flex-1">Oil changes, fluid checks, filter replacements, and scheduled mileage services.</p>
-              <Link href="/login" className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 rounded-xl hover:border-purple-600 hover:bg-purple-600 hover:text-white transition-all flex justify-center items-center gap-2">
+              <Link href="/book" className="w-full bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 rounded-xl hover:border-purple-600 hover:bg-purple-600 hover:text-white transition-all flex justify-center items-center gap-2">
                 <Calendar size={18} /> Book Now
               </Link>
             </div>
@@ -173,7 +180,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">Pre-Purchase Inspections</h3>
                 <p className="text-blue-100 mb-8 flex-1">Complete vehicle assessment before you buy. Engine, gearbox, body condition, and ECU scanning.</p>
-                <Link href="/login" className="w-full bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-blue-50 hover:shadow-lg transition-all flex justify-center items-center gap-2">
+                <Link href="/book" className="w-full bg-white text-blue-700 font-bold py-3 rounded-xl hover:bg-blue-50 hover:shadow-lg transition-all flex justify-center items-center gap-2">
                   <Calendar size={18} /> Book Now
                 </Link>
               </div>
@@ -182,7 +189,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. FOOTER (Imerudishwa) */}
+      {/* 5. FOOTER (Imerudishwa na Links zote za msingi) */}
       <footer className="bg-slate-950 pt-20 pb-10 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
@@ -196,11 +203,13 @@ export default function Home() {
               </p>
             </div>
             <div>
-              <h4 className="text-white font-bold mb-6 uppercase tracking-wider text-sm">System Access</h4>
+              <h4 className="text-white font-bold mb-6 uppercase tracking-wider text-sm">Quick Links</h4>
               <ul className="space-y-4 text-slate-400">
-                <li><Link href="/client-portal" className="hover:text-blue-400 transition">Client Dashboard</Link></li>
-                <li><Link href="/login" className="hover:text-blue-400 transition">Staff Login</Link></li>
-                <li><Link href="/login" className="hover:text-blue-400 transition">Admin Login</Link></li>
+                <li><Link href="#services" className="hover:text-blue-400 transition">Our Services</Link></li>
+                <li><Link href="/parts" className="hover:text-blue-400 transition">Order Spare Parts</Link></li>
+                <li><Link href="/book" className="hover:text-blue-400 transition">Book Appointment</Link></li>
+                <li><Link href="/contact" className="hover:text-blue-400 transition">Contact Us</Link></li>
+                <li><Link href="/login" className="hover:text-blue-400 transition">System Access</Link></li>
               </ul>
             </div>
             <div>
