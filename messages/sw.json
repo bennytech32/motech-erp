@@ -1,0 +1,14 @@
+{
+  "Dashboard": {
+    "title": "Dashibodi ya Utawala",
+    "welcome": "Karibu tena",
+    "totalCars": "Jumla ya Magari Yaliyopo",
+    "inventory": "Hali ya Stoo"
+  },
+  "Navigation": {
+    "dashboard": "Dashibodi",
+    "jobCards": "Kadi za Kazi (Job Cards)",
+    "inventory": "Stoo / Spea",
+    "inspection": "Ukaguzi Kabla ya Kununua"
+  }
+}

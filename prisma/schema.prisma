@@ -1,0 +1,146 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Hapa ndipo Prisma 6 inaposoma link za Neon moja kwa moja bila error
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+// ==========================================
+// 1. WAFANYAKAZI NA ADMIN (USERS)
+// ==========================================
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  role      Role     @default(MECHANIC)
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobCards  JobCard[] @relation("AssignedMechanic")
+}
+
+enum Role {
+  SUPER_ADMIN
+  RECEPTIONIST
+  MECHANIC
+  STORE_MANAGER
+}
+
+// ==========================================
+// 2. WATEJA (CUSTOMERS)
+// ==========================================
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @unique
+  email     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  vehicles  Vehicle[]
+  jobCards  JobCard[]
+}
+
+// ==========================================
+// 3. MAGARI YA WATEJA (VEHICLES)
+// ==========================================
+model Vehicle {
+  id            String    @id @default(cuid())
+  plateNumber   String    @unique
+  make          String    // Mfano: Toyota, Subaru
+  model         String    // Mfano: Crown, Forester
+  year          Int?
+  chassisNumber String?   @unique
+  
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  jobCards      JobCard[]
+  inspections   PrePurchaseInspection[]
+}
+
+// ==========================================
+// 4. JOB CARDS (MOYO WA MFUMO WA GEREJI)
+// ==========================================
+model JobCard {
+  id            String        @id @default(cuid())
+  cardNumber    String        @unique // Mfano: JC-1001
+  status        JobStatus     @default(QUEUED)
+  complaint     String        @db.Text
+  diagnosis     String?       @db.Text
+  
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  
+  vehicleId     String
+  vehicle       Vehicle       @relation(fields: [vehicleId], references: [id])
+  
+  mechanicId    String?
+  mechanic      User?         @relation("AssignedMechanic", fields: [mechanicId], references: [id])
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  items         JobCardItem[]
+}
+
+enum JobStatus {
+  QUEUED
+  DIAGNOSING
+  WAITING_PARTS
+  FIXING
+  READY_FOR_PICKUP
+  COMPLETED
+}
+
+// ==========================================
+// 5. SPEA NA HUDUMA ZILIZOTUMIKA (JOB CARD ITEMS)
+// ==========================================
+model JobCardItem {
+  id          String   @id @default(cuid())
+  jobCardId   String
+  jobCard     JobCard  @relation(fields: [jobCardId], references: [id])
+  
+  description String   // Jina la spea au huduma
+  quantity    Int      @default(1)
+  price       Float    // Bei ya uniti moja
+  type        ItemType
+}
+
+enum ItemType {
+  PART
+  SERVICE
+}
+
+// ==========================================
+// 6. RIPOTI ZA UKAGUZI KABLA YA KUNUNUA (PRE-PURCHASE INSPECTIONS)
+// ==========================================
+model PrePurchaseInspection {
+  id            String   @id @default(cuid())
+  reportNumber  String   @unique
+  
+  vehicleId     String
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id])
+  
+  location      String   // Wapi gari lilipokaguliwa (Mfano: Makongo, Showroom)
+  engineStatus  String
+  gearboxStatus String
+  ecuScanned    Boolean  @default(false)
+  dtcCodes      String?  @db.Text // Kama kuna fault codes zimeonekana kwenye scanner
+  bodyCondition String
+  overallGrade  String   // Mfano: PASS, FAIL, NEEDS_ATTENTION
+  reportPdfUrl  String?  // Link ya PDF itakayoenda kwa mteja
+  
+  createdAt     DateTime @default(now())
+}

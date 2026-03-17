@@ -1,0 +1,14 @@
+{
+  "Dashboard": {
+    "title": "Admin Dashboard",
+    "welcome": "Welcome back",
+    "totalCars": "Total Cars Queued",
+    "inventory": "Inventory Status"
+  },
+  "Navigation": {
+    "dashboard": "Dashboard",
+    "jobCards": "Job Cards",
+    "inventory": "Inventory",
+    "inspection": "Pre-Purchase Inspection"
+  }
+}
