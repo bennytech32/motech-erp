@@ -1,146 +1,103 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// Hapa ndipo Prisma 6 inaposoma link za Neon moja kwa moja bila error
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// ==========================================
-// 1. WAFANYAKAZI NA ADMIN (USERS)
-// ==========================================
+// 1. WAFANYAKAZI (Admin, Reception, Mechanic)
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   name      String
   email     String   @unique
-  phone     String?
-  role      Role     @default(MECHANIC)
   password  String
+  role      String   // "Admin", "Reception", "Mechanic"
+  jobs      Job[]    @relation("AssignedMechanic")
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  jobCards  JobCard[] @relation("AssignedMechanic")
 }
 
-enum Role {
-  SUPER_ADMIN
-  RECEPTIONIST
-  MECHANIC
-  STORE_MANAGER
-}
-
-// ==========================================
-// 2. WATEJA (CUSTOMERS)
-// ==========================================
-model Customer {
-  id        String    @id @default(cuid())
+// 2. WATEJA WETU
+model Client {
+  id        String    @id @default(uuid())
   name      String
-  phone     String    @unique
+  phone     String
   email     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
   vehicles  Vehicle[]
-  jobCards  JobCard[]
+  createdAt DateTime  @default(now())
 }
 
-// ==========================================
-// 3. MAGARI YA WATEJA (VEHICLES)
-// ==========================================
+// 3. MAGARI YA WATEJA
 model Vehicle {
-  id            String    @id @default(cuid())
-  plateNumber   String    @unique
-  make          String    // Mfano: Toyota, Subaru
-  model         String    // Mfano: Crown, Forester
-  year          Int?
-  chassisNumber String?   @unique
-  
-  customerId    String
-  customer      Customer  @relation(fields: [customerId], references: [id])
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  jobCards      JobCard[]
-  inspections   PrePurchaseInspection[]
+  id        String   @id @default(uuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id])
+  make      String   // Mfano: Toyota
+  model     String   // Mfano: Land Cruiser
+  plate     String   @unique
+  vin       String?
+  jobs      Job[]
 }
 
-// ==========================================
-// 4. JOB CARDS (MOYO WA MFUMO WA GEREJI)
-// ==========================================
-model JobCard {
-  id            String        @id @default(cuid())
-  cardNumber    String        @unique // Mfano: JC-1001
-  status        JobStatus     @default(QUEUED)
-  complaint     String        @db.Text
-  diagnosis     String?       @db.Text
-  
-  customerId    String
-  customer      Customer      @relation(fields: [customerId], references: [id])
-  
+// 4. KAZI / BOOKINGS / MATENGENEZO (Hapa ndio workflow inapita)
+model Job {
+  id            String       @id @default(uuid())
   vehicleId     String
-  vehicle       Vehicle       @relation(fields: [vehicleId], references: [id])
-  
-  mechanicId    String?
-  mechanic      User?         @relation("AssignedMechanic", fields: [mechanicId], references: [id])
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  items         JobCardItem[]
+  vehicle       Vehicle      @relation(fields: [vehicleId], references: [id])
+  serviceType   String
+  description   String?      // Tatizo alilosema mteja (Kutoka kwenye booking form)
+  status        String       // "Pending", "In Progress", "Waiting Parts", "Ready", "Collected"
+  mechanicId    String?      // Fundi aliyekabidhiwa
+  mechanic      User?        @relation("AssignedMechanic", fields: [mechanicId], references: [id])
+  mechanicNotes String?      // Ugonjwa aliougundua fundi (Diagnosis)
+  requestedParts String?     // Vifaa anavyoomba fundi kutoka stoo
+  appointment   DateTime?    // Tarehe ya kuja
+  invoice       Invoice?
+  partsUsed     JobPart[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
-enum JobStatus {
-  QUEUED
-  DIAGNOSING
-  WAITING_PARTS
-  FIXING
-  READY_FOR_PICKUP
-  COMPLETED
+// 5. INVENTORY (Spare Parts zilizopo stoo)
+model SparePart {
+  id        String     @id @default(uuid())
+  name      String
+  category  String
+  price     Float
+  stock     Int
+  jobs      JobPart[]
 }
 
-// ==========================================
-// 5. SPEA NA HUDUMA ZILIZOTUMIKA (JOB CARD ITEMS)
-// ==========================================
-model JobCardItem {
-  id          String   @id @default(cuid())
-  jobCardId   String
-  jobCard     JobCard  @relation(fields: [jobCardId], references: [id])
-  
-  description String   // Jina la spea au huduma
-  quantity    Int      @default(1)
-  price       Float    // Bei ya uniti moja
-  type        ItemType
+// 6. VIFAA VILIVYOTUMIKA KWENYE GARI HUSIKA (Kama Fundi kaagiza na vimetumika)
+model JobPart {
+  id          String    @id @default(uuid())
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id])
+  partId      String
+  part        SparePart @relation(fields: [partId], references: [id])
+  quantity    Int
+  priceAtTime Float     // Bei ya wakati huo ili isibadilike kwenye invoice hata kama stoo ikipanda bei
 }
 
-enum ItemType {
-  PART
-  SERVICE
+// 7. INVOICES & MALIPO
+model Invoice {
+  id          String   @id @default(uuid())
+  jobId       String   @unique
+  job         Job      @relation(fields: [jobId], references: [id])
+  laborCost   Float    @default(0) // Pesa ya ufundi
+  totalAmount Float    // Jumla (Labor + Parts)
+  status      String   // "Unpaid", "Paid"
+  createdAt   DateTime @default(now())
 }
 
-// ==========================================
-// 6. RIPOTI ZA UKAGUZI KABLA YA KUNUNUA (PRE-PURCHASE INSPECTIONS)
-// ==========================================
-model PrePurchaseInspection {
-  id            String   @id @default(cuid())
-  reportNumber  String   @unique
-  
-  vehicleId     String
-  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id])
-  
-  location      String   // Wapi gari lilipokaguliwa (Mfano: Makongo, Showroom)
-  engineStatus  String
-  gearboxStatus String
-  ecuScanned    Boolean  @default(false)
-  dtcCodes      String?  @db.Text // Kama kuna fault codes zimeonekana kwenye scanner
-  bodyCondition String
-  overallGrade  String   // Mfano: PASS, FAIL, NEEDS_ATTENTION
-  reportPdfUrl  String?  // Link ya PDF itakayoenda kwa mteja
-  
-  createdAt     DateTime @default(now())
+// 8. EMERGENCY SOS ALERTS
+model SOSAlert {
+  id          String   @id @default(uuid())
+  name        String
+  phone       String
+  location    String   // Mahali alipokwama
+  issue       String   // Shida ya gari
+  status      String   @default("Active") // "Active" (Bado haijatatuliwa) au "Resolved" (Imetatuliwa)
+  createdAt   DateTime @default(now())
 }

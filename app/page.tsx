@@ -5,14 +5,18 @@ import Link from 'next/link';
 import { 
   Wrench, ShieldCheck, Clock, CarFront, ArrowRight, CheckCircle2, 
   MapPin, Star, Search, Calendar, Store, PlayCircle, Menu, AlertTriangle, 
-  X, Award, ThumbsUp, Zap, ChevronRight
+  X, Award, ThumbsUp, Zap, ChevronRight, Quote, Plus, Minus, Phone, Mail, MessageCircle
 } from 'lucide-react';
 
 export default function Home() {
-  // STATE KWA AJILI YA MENU YA SIMU (MOBILE)
+  // =====================================
+  // 1. DYNAMIC STATES
+  // =====================================
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
   
-  // STATE KWA AJILI YA COMPANY METRICS (Standard Realistic Data)
+  // LIVE METRICS
   const [liveStats, setLiveStats] = useState({
     vehiclesServiced: "1000+",
     happyClients: "500+",
@@ -20,13 +24,70 @@ export default function Home() {
     yearsExperience: "10"
   });
 
+  // =====================================
+  // 2. DATA ARRAYS (LOCAL IMAGES)
+  // =====================================
+  // WEKA PICHA ZAKO KWENYE FOLDER LINAITWA "public" kisha uzipe haya majina (slide1.jpg, n.k.)
+  const heroImages = [
+    "/slide1.jpg", 
+    "/slide2.jpg", 
+    "/slide3.jpg"  
+  ];
+
+  const faqs = [
+    {
+      question: "Do you offer a warranty on spare parts and repairs?",
+      answer: "Yes, absolutely. All our OEM genuine spare parts come with a standard manufacturer's warranty. Additionally, we provide a 6-month or 10,000 km warranty on our labor and repairs for your peace of mind."
+    },
+    {
+      question: "How does the Emergency SOS service work?",
+      answer: "If you're stranded, simply click the 'SOS' button on our website or Client Portal. The system will grab your GPS location and dispatch our 24/7 rapid response team with a tow truck or mobile mechanic immediately."
+    },
+    {
+      question: "Can I track my vehicle's repair progress online?",
+      answer: "Yes! Once you book your car in, you can log into our Client Portal to see live updates, photos, and the exact percentage of completion. You'll know exactly what's happening at every stage."
+    },
+    {
+      question: "Do you service all car brands or just specific ones?",
+      answer: "Our certified master technicians are equipped with advanced diagnostic tools to service all major international brands including Toyota, Mercedes-Benz, BMW, Nissan, Subaru, and Ford."
+    }
+  ];
+
+  const testimonials = [
+    {
+      name: "David M.",
+      role: "Mercedes C200 Owner",
+      quote: "The transparency is unmatched. I tracked my car's engine overhaul live from the portal. The car feels brand new again. Highly recommended!",
+      rating: 5
+    },
+    {
+      name: "Sarah K.",
+      role: "Fleet Manager",
+      quote: "MoTech-i handles all 15 cars for our company. Their OEM spare parts and immediate SOS response have saved us so much downtime.",
+      rating: 5
+    },
+    {
+      name: "John T.",
+      role: "Subaru Forester Owner",
+      quote: "I was stranded at 2 AM with a blown gasket. Used the SOS feature on my phone, and their tow truck found my exact GPS location in 20 minutes.",
+      rating: 5
+    }
+  ];
+
+  // =====================================
+  // 3. EFFECTS (SLIDESHOW)
+  // =====================================
   useEffect(() => {
-    // API Call imesimamishwa kwa sasa ili kutumia Standard Marketing Data hapo juu.
-    // fetch('/api/public/stats').then(res => res.json()).then(data => setLiveStats(data));
-  }, []);
+    const slideInterval = setInterval(() => {
+      setCurrentSlide((prev) => (prev === heroImages.length - 1 ? 0 : prev + 1));
+    }, 5000);
+
+    return () => clearInterval(slideInterval);
+  }, [heroImages.length]);
+
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-200 flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-200 flex flex-col relative overflow-x-hidden scroll-smooth">
       
       {/* STYLE YA LOGO ZINAZOTEMBEA */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -66,6 +127,7 @@ export default function Home() {
               <Link href="/showroom" className="text-slate-600 hover:text-blue-600 font-bold transition flex items-center gap-1.5 text-sm uppercase tracking-wide"><Store size={16} className="text-emerald-600"/> Showroom</Link>
               <Link href="/academy" className="text-slate-600 hover:text-blue-600 font-bold transition flex items-center gap-1.5 text-sm uppercase tracking-wide"><PlayCircle size={16} className="text-blue-600"/> Academy</Link>
               <Link href="/parts" className="text-slate-600 hover:text-blue-600 font-bold transition text-sm uppercase tracking-wide">Spare Parts</Link>
+              <Link href="#contact" className="text-slate-600 hover:text-blue-600 font-bold transition text-sm uppercase tracking-wide">Contact</Link>
             </div>
 
             {/* Client Portal Button & Mobile Toggle */}
@@ -91,36 +153,52 @@ export default function Home() {
             <Link onClick={() => setIsMobileMenuOpen(false)} href="/showroom" className="p-4 bg-emerald-50 text-emerald-800 rounded-xl font-bold flex items-center gap-2"><Store size={18}/> Premium Showroom</Link>
             <Link onClick={() => setIsMobileMenuOpen(false)} href="/academy" className="p-4 bg-blue-50 text-blue-800 rounded-xl font-bold flex items-center gap-2"><PlayCircle size={18}/> MoTech-i Academy</Link>
             <Link onClick={() => setIsMobileMenuOpen(false)} href="/parts" className="p-4 bg-slate-50 rounded-xl font-bold text-slate-800">Genuine Spare Parts</Link>
+            <Link onClick={() => setIsMobileMenuOpen(false)} href="#contact" className="p-4 bg-slate-50 rounded-xl font-bold text-slate-800">Contact Us</Link>
             <Link onClick={() => setIsMobileMenuOpen(false)} href="/client-portal" className="p-4 bg-slate-900 text-white rounded-xl font-bold flex justify-center items-center gap-2 mt-2">Access Client Portal <ArrowRight size={18}/></Link>
           </div>
         )}
       </nav>
 
-      {/* 2. HERO SECTION */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-4 overflow-hidden flex items-center justify-center min-h-[85vh]">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=2074&auto=format&fit=crop" 
-            alt="Mechanic working on car engine" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/80 to-slate-900/40 backdrop-blur-[2px]"></div>
-        </div>
+      {/* 2. HERO SECTION W/ IMAGE SLIDER */}
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-4 overflow-hidden flex items-center justify-center min-h-[85vh] bg-slate-900">
+        
+        {/* Picha Zinazobadilika (Slideshow) */}
+        {heroImages.map((image, index) => (
+          <div 
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out z-0 ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+          >
+            {/* TUMIA img tag kwa Local files zenye dynamic src */}
+            <img 
+              src={image} 
+              alt={`MoTech-i Service Slide ${index + 1}`} 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Fallback kama picha haijapatikana public folder
+                e.currentTarget.src = "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=2074&auto=format&fit=crop";
+              }}
+            />
+          </div>
+        ))}
+        {/* Giza (Overlay) ili maneno yasomeke */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/80 to-slate-900/40 backdrop-blur-[2px] z-0"></div>
+        
 
+        {/* Hero Content */}
         <div className="max-w-7xl mx-auto w-full relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-300 font-semibold text-xs md:text-sm border border-blue-400/30 backdrop-blur-sm mb-6 md:mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-300 font-semibold text-xs md:text-sm border border-blue-400/30 backdrop-blur-sm mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Star size={16} className="fill-blue-400" /> Premium Auto Care Center
           </div>
           
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.1] tracking-tight max-w-4xl">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.1] tracking-tight max-w-4xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
             Intelligent Care For Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Vehicle.</span>
           </h1>
           
-          <p className="text-lg md:text-xl text-slate-300 leading-relaxed max-w-2xl mt-6">
+          <p className="text-lg md:text-xl text-slate-300 leading-relaxed max-w-2xl mt-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
             Experience transparent, high-quality automotive repair, diagnostics, and maintenance. Schedule an appointment and track your vehicle's progress in real-time.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 mt-10 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-4 mt-10 w-full sm:w-auto animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
             <Link href="/book" className="bg-blue-600 text-white px-8 py-4 rounded-xl font-black text-lg hover:bg-blue-700 transition shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2">
               Book Appointment <Calendar size={20} />
             </Link>
@@ -129,15 +207,26 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="flex flex-wrap justify-center md:justify-start gap-6 text-slate-300 font-medium mt-12 text-sm md:text-base">
+          <div className="flex flex-wrap justify-center md:justify-start gap-6 text-slate-300 font-medium mt-12 text-sm md:text-base animate-in fade-in duration-1000 delay-500">
             <span className="flex items-center gap-2"><CheckCircle2 className="text-emerald-400" size={20}/> OEM Parts</span>
             <span className="flex items-center gap-2"><CheckCircle2 className="text-emerald-400" size={20}/> Certified Mechanics</span>
             <span className="flex items-center gap-2"><CheckCircle2 className="text-emerald-400" size={20}/> Digital Tracking</span>
           </div>
         </div>
+
+        {/* Slide Indicators (Viduara vidogo chini) */}
+        <div className="absolute bottom-8 left-0 w-full flex justify-center gap-3 z-10">
+          {heroImages.map((_, idx) => (
+            <button 
+              key={idx} 
+              onClick={() => setCurrentSlide(idx)}
+              className={`h-2 rounded-full transition-all duration-300 ${idx === currentSlide ? 'w-8 bg-blue-500' : 'w-2 bg-white/40 hover:bg-white/70'}`}
+            />
+          ))}
+        </div>
       </section>
 
-      {/* 3. COMPANY METRICS (Standard Realistic Data) */}
+      {/* 3. COMPANY METRICS */}
       <section className="relative -mt-10 z-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 md:p-10 grid grid-cols-2 md:grid-cols-4 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100">
           <div className="text-center pt-4 md:pt-0">
@@ -159,39 +248,39 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. BRAND CAROUSEL */}
-      <section className="py-16 bg-slate-50 border-b border-slate-200 overflow-hidden mt-10">
+      {/* 4. BRAND CAROUSEL (Light Gray Background to break the white) */}
+      <section className="py-16 bg-slate-100 border-b border-slate-200 overflow-hidden mt-10">
         <div className="max-w-7xl mx-auto px-4 mb-8 text-center">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Equipped to service all major international brands</p>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Equipped to service all major international brands</p>
         </div>
         
         <div className="relative w-full overflow-hidden h-20 flex items-center">
-          <div className="absolute left-0 top-0 w-24 md:w-48 h-full bg-gradient-to-r from-slate-50 to-transparent z-10"></div>
-          <div className="absolute right-0 top-0 w-24 md:w-48 h-full bg-gradient-to-l from-slate-50 to-transparent z-10"></div>
+          <div className="absolute left-0 top-0 w-24 md:w-48 h-full bg-gradient-to-r from-slate-100 to-transparent z-10"></div>
+          <div className="absolute right-0 top-0 w-24 md:w-48 h-full bg-gradient-to-l from-slate-100 to-transparent z-10"></div>
           
           <div className="animate-scroll-logos flex items-center">
             {/* Set 1 */}
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/toyota/slate-400" alt="Toyota" className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/nissan/slate-400" alt="Nissan" className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/honda/slate-400" alt="Honda" className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/bmw/slate-400" alt="BMW" className="h-10 md:h-12 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/mercedesbenz/slate-400" alt="Mercedes" className="h-10 md:h-12 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/subaru/slate-400" alt="Subaru" className="h-6 md:h-8 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/ford/slate-400" alt="Ford" className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/toyota/slate-400" alt="Toyota" className="h-8 md:h-10 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/nissan/slate-400" alt="Nissan" className="h-8 md:h-10 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/honda/slate-400" alt="Honda" className="h-8 md:h-10 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/bmw/slate-400" alt="BMW" className="h-10 md:h-12 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/mercedesbenz/slate-400" alt="Mercedes" className="h-10 md:h-12 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/subaru/slate-400" alt="Subaru" className="h-6 md:h-8 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/ford/slate-400" alt="Ford" className="h-8 md:h-10 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
 
             {/* Set 2 */}
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/toyota/slate-400" alt="Toyota" className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/nissan/slate-400" alt="Nissan" className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/honda/slate-400" alt="Honda" className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/bmw/slate-400" alt="BMW" className="h-10 md:h-12 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/mercedesbenz/slate-400" alt="Mercedes" className="h-10 md:h-12 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/subaru/slate-400" alt="Subaru" className="h-6 md:h-8 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
-            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/ford/slate-400" alt="Ford" className="h-8 md:h-10 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/toyota/slate-400" alt="Toyota" className="h-8 md:h-10 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/nissan/slate-400" alt="Nissan" className="h-8 md:h-10 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/honda/slate-400" alt="Honda" className="h-8 md:h-10 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/bmw/slate-400" alt="BMW" className="h-10 md:h-12 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/mercedesbenz/slate-400" alt="Mercedes" className="h-10 md:h-12 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/subaru/slate-400" alt="Subaru" className="h-6 md:h-8 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
+            <div className="flex w-[200px] md:w-[250px] justify-center items-center px-10"><img src="https://cdn.simpleicons.org/ford/slate-400" alt="Ford" className="h-8 md:h-10 w-auto grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition duration-300"/></div>
           </div>
         </div>
       </section>
 
-      {/* 5. WHY CHOOSE US (Trust & Authority) */}
+      {/* 5. WHY CHOOSE US (White Background) */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -225,8 +314,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. SHOWROOM & ACADEMY PROMO SECTION */}
-      <section className="bg-slate-50 py-16">
+      {/* 6. SHOWROOM & ACADEMY PROMO SECTION (Light Slate Background) */}
+      <section className="bg-slate-100 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8">
             <Link href="/showroom" className="group bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-200 hover:border-emerald-300 hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row items-start md:items-center gap-8 relative overflow-hidden">
@@ -260,7 +349,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. SERVICES SECTION */}
+      {/* 7. SERVICES SECTION (White Background) */}
       <section id="services" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -336,8 +425,124 @@ export default function Home() {
         </div>
       </section>
 
+      {/* TESTIMONIALS (Social Proof - Dark Background) */}
+      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1553440569-bcc63803a83d?q=80&w=2025&auto=format&fit=crop')] bg-cover bg-center opacity-10"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-sm font-bold text-emerald-400 uppercase tracking-widest mb-2">Client Success Stories</h2>
+            <h3 className="text-3xl md:text-5xl font-black mb-4">Don't just take our word for it.</h3>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, idx) => (
+              <div key={idx} className="bg-slate-800/50 backdrop-blur-md p-8 rounded-3xl border border-slate-700 hover:border-blue-500 transition-colors">
+                <div className="flex text-emerald-400 mb-6">
+                  {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={20} fill="currentColor" />)}
+                </div>
+                <Quote size={40} className="text-slate-600 mb-4" />
+                <p className="text-slate-300 text-lg leading-relaxed mb-8 italic">"{testimonial.quote}"</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
+                    {testimonial.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white">{testimonial.name}</h4>
+                    <p className="text-sm text-slate-400">{testimonial.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ (Frequently Asked Questions - Blue Darker Background to break white) */}
+      <section className="py-20 bg-slate-950 border-t border-slate-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-sm font-bold text-blue-500 uppercase tracking-widest mb-2">Got Questions?</h2>
+            <h3 className="text-3xl md:text-4xl font-black text-white">Frequently Asked Questions</h3>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div key={index} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden transition-all duration-300 hover:border-blue-500">
+                <button 
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  className="w-full px-6 py-5 flex justify-between items-center focus:outline-none"
+                >
+                  <span className="font-bold text-lg text-white text-left">{faq.question}</span>
+                  {openFaq === index ? <Minus className="text-blue-500 shrink-0" /> : <Plus className="text-slate-500 shrink-0" />}
+                </button>
+                {openFaq === index && (
+                  <div className="px-6 pb-6 text-slate-400 leading-relaxed border-t border-slate-800 pt-4 animate-in slide-in-from-top-2">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CONTACT US (White Background) */}
+      <section id="contact" className="py-24 bg-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-blue-50/50 skew-x-12 transform origin-top-right z-0 hidden lg:block"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2">Get In Touch</h2>
+            <h3 className="text-3xl md:text-5xl font-black text-slate-900">We're Here to Help</h3>
+            <p className="text-slate-600 mt-4 text-lg">Have a question or need emergency assistance? Reach out to our team through any of the channels below.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Phone Card */}
+            <a href="tel:+255758406251" className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col items-center text-center group">
+              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <Phone size={28} />
+              </div>
+              <h4 className="text-xl font-bold text-slate-900 mb-2">Call Us</h4>
+              <p className="text-slate-500 text-sm mb-4">Mon-Fri from 8am to 6pm.</p>
+              <p className="text-blue-600 font-black text-lg mt-auto">+255 758 406 251</p>
+            </a>
+
+            {/* WhatsApp Card */}
+            <a href="https://wa.me/255744588586" target="_blank" rel="noreferrer" className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#25D366] transition-all duration-300 flex flex-col items-center text-center group">
+              <div className="w-16 h-16 bg-[#25D366]/10 text-[#25D366] rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-[#25D366] group-hover:text-white transition-all">
+                <MessageCircle size={28} />
+              </div>
+              <h4 className="text-xl font-bold text-slate-900 mb-2">WhatsApp</h4>
+              <p className="text-slate-500 text-sm mb-4">Fast responses for booking & inquiries.</p>
+              <p className="text-[#25D366] font-black text-lg mt-auto">+255 744 588 586</p>
+            </a>
+
+            {/* Email Card */}
+            <a href="mailto:info@motech-i.com" className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-red-300 transition-all duration-300 flex flex-col items-center text-center group">
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-red-500 group-hover:text-white transition-all">
+                <Mail size={28} />
+              </div>
+              <h4 className="text-xl font-bold text-slate-900 mb-2">Email Us</h4>
+              <p className="text-slate-500 text-sm mb-4">For corporate accounts & feedback.</p>
+              <p className="text-red-500 font-black text-lg mt-auto">info@motech-i.com</p>
+            </a>
+
+            {/* Location Card */}
+            <a href="https://maps.google.com/?q=Makongo+Juu,+Dar+es+Salaam" target="_blank" rel="noreferrer" className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-xl hover:shadow-2xl hover:bg-slate-800 transition-all duration-300 flex flex-col items-center text-center group">
+              <div className="w-16 h-16 bg-white/10 text-white rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-all">
+                <MapPin size={28} />
+              </div>
+              <h4 className="text-xl font-bold text-white mb-2">Visit Garage</h4>
+              <p className="text-slate-400 text-sm mb-4">Drop by our high-tech facility.</p>
+              <p className="text-white font-black text-lg mt-auto">Makongo Juu, Dar es Salaam</p>
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* 8. BOTTOM CALL TO ACTION */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-slate-50 border-t border-slate-200">
         <div className="max-w-5xl mx-auto bg-gradient-to-br from-slate-900 to-blue-900 rounded-[3rem] p-10 md:p-16 text-center shadow-2xl relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1613214149922-f1809c99b414?q=80&w=2000')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
           <div className="relative z-10">
@@ -376,22 +581,21 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-black mb-6 uppercase tracking-wider text-sm">Working Hours</h4>
+              <h4 className="text-white font-black mb-6 uppercase tracking-wider text-sm">Contact & Hours</h4>
               <ul className="space-y-4 text-slate-400 font-medium">
-                <li className="flex justify-between border-b border-slate-800 pb-3">
+                <li className="flex items-center gap-2"><Phone size={16}/> +255 758 406 251</li>
+                <li className="flex items-center gap-2"><MapPin size={16}/> Makongo Juu, Dar es Salaam</li>
+                <li className="flex justify-between border-t border-slate-800 pt-3 mt-3">
                   <span>Mon - Fri</span><span className="text-white">08:00 AM - 06:00 PM</span>
                 </li>
-                <li className="flex justify-between border-b border-slate-800 pb-3">
+                <li className="flex justify-between">
                   <span>Saturday</span><span className="text-white">09:00 AM - 03:00 PM</span>
-                </li>
-                <li className="flex justify-between pt-1">
-                  <span>Sunday</span><span className="text-red-400 font-bold bg-red-500/10 px-3 py-1 rounded-lg">Emergencies Only</span>
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between text-slate-500 font-medium text-sm">
-            <p>&copy; {new Date().getFullYear()} MoTech-i Technologies. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} MoTech-i Technologies. All rights reserved.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <Link href="#" className="hover:text-white transition">Privacy Policy</Link>
               <Link href="#" className="hover:text-white transition">Terms of Service</Link>

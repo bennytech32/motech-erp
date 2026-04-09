@@ -1,24 +1,47 @@
-import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
+const prisma = new PrismaClient();
+
+// MTEJA ANAPOTUMA SOS
 export async function POST(request: Request) {
   try {
-    // Vuta data iliyotoka kwenye form ya mteja
     const body = await request.json();
-    const { name, phone, carPlate, issue, lat, lng } = body;
+    const { name, phone, location, issue } = body;
 
-    // Unganisha na Neon Database
-    const sql = neon(process.env.DATABASE_URL!);
+    const newSOS = await prisma.sOSAlert.create({
+      data: { name, phone, location, issue }
+    });
 
-    // Ingiza data kwenye Table yetu
-    await sql`
-      INSERT INTO sos_alerts (name, phone, car_plate, issue, latitude, longitude)
-      VALUES (${name}, ${phone}, ${carPlate}, ${issue}, ${lat}, ${lng})
-    `;
-
-    return NextResponse.json({ success: true, message: "SOS Alert saved successfully!" }, { status: 201 });
+    return NextResponse.json({ success: true, data: newSOS }, { status: 201 });
   } catch (error) {
-    console.error("Database Error:", error);
-    return NextResponse.json({ success: false, error: "Imeshindwa kutuma taarifa" }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Failed to send SOS' }, { status: 500 });
+  }
+}
+
+// ADMIN NA RECEPTION WANAPOSOMA SOS
+export async function GET() {
+  try {
+    const alerts = await prisma.sOSAlert.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return NextResponse.json({ success: true, data: alerts }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ success: false, message: 'Failed to fetch alerts' }, { status: 500 });
+  }
+}
+
+// KUFANGA SOS KAMA IMETATULIWA (Resolved)
+export async function PATCH(request: Request) {
+  try {
+    const { id, status } = await request.json();
+    const updated = await prisma.sOSAlert.update({
+      where: { id },
+      data: { status }
+    });
+    return NextResponse.json({ success: true, data: updated }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ success: false, message: 'Failed to update SOS' }, { status: 500 });
   }
 }

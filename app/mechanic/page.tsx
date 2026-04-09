@@ -1,272 +1,285 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
 import { 
-  CarFront, Wrench, ClipboardList, LogOut, 
-  CheckCircle2, Clock, Play, Check, PackageSearch, 
-  AlertCircle, PlusCircle, ThumbsUp, Info, Activity, Menu
+  Wrench, CheckCircle2, LogOut, Clock, Play, Loader2, FileText, PackagePlus, AlertCircle
 } from 'lucide-react';
 
-export default function MechanicPortal() {
-  const [jobStatus, setJobStatus] = useState<'assigned' | 'inspection' | 'repairing' | 'completed'>('assigned');
+export default function MechanicDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [mechanicUser, setMechanicUser] = useState<any>(null);
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // DATA STATES
+  const [availableJobs, setAvailableJobs] = useState<any[]>([]); 
+  const [myJobs, setMyJobs] = useState<any[]>([]); 
+
+  // STATES KWA AJILI YA KUANDIKA UGONJWA NA KUOMBA VIFAA
+  const [diagnostics, setDiagnostics] = useState<{[key: string]: string}>({});
+  const [partRequests, setPartRequests] = useState<{[key: string]: string}>({});
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('motech_mechanic');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      setMechanicUser(user);
+      setIsAuthenticated(true);
+      fetchJobs(user);
+    }
+  }, []);
+
+  const fetchJobs = async (user: any) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/bookings', { cache: 'no-store' });
+      const result = await res.json();
+      
+      if (result.success) {
+        // Gari ambazo hazina fundi
+        const available = result.data.filter((j: any) => j.status === 'Pending' && !j.mechanicId);
+        
+        // Gari za huyu fundi (Tunatumia email kutambua badala ya fake ID)
+        const mine = result.data.filter((j: any) => j.mechanic?.email === user.email && j.status !== 'Collected');
+        
+        setAvailableJobs(available);
+        setMyJobs(mine);
+
+        // Hifadhi notes za zamani ili fundi aendelee alipoishia
+        const currentDiags: any = {};
+        const currentParts: any = {};
+        mine.forEach(job => {
+          currentDiags[job.id] = job.mechanicNotes || '';
+          currentParts[job.id] = job.requestedParts || '';
+        });
+        setDiagnostics(currentDiags);
+        setPartRequests(currentParts);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    if (loginForm.email === 'fundi@motech-i.com' && loginForm.password === 'fundi2026') {
+      const user = { name: 'Master Mechanic', email: 'fundi@motech-i.com', role: 'Senior Tech' };
+      localStorage.setItem('motech_mechanic', JSON.stringify(user));
+      setMechanicUser(user);
+      setIsAuthenticated(true);
+      fetchJobs(user);
+    } else {
+      alert("Invalid Credentials");
+    }
+    setIsLoggingIn(false);
+  };
+
+  // KUCHUKUA KAZI MPYA NA KUMTAMBULISHA FUNDI DB
+  const handleTakeJob = async (jobId: string) => {
+    try {
+      await fetch('/api/jobs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          jobId, 
+          status: 'In Progress', 
+          mechanicName: mechanicUser.name, 
+          mechanicEmail: mechanicUser.email 
+        })
+      });
+      fetchJobs(mechanicUser);
+    } catch(err) {
+      alert("Error taking job.");
+    }
+  };
+
+  // KUSAVE UGONJWA, VIFAA NA KUBADILI STATUS
+  const handleSaveDiagnosisAndStatus = async (jobId: string, newStatus: string) => {
+    setIsUpdating(jobId);
+    try {
+      await fetch('/api/jobs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          jobId, 
+          status: newStatus,
+          mechanicNotes: diagnostics[jobId],
+          requestedParts: partRequests[jobId]
+        })
+      });
+      fetchJobs(mechanicUser);
+    } catch(err) {
+      alert("Error saving job updates.");
+    } finally {
+      setIsUpdating(null);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('motech_mechanic');
+    setIsAuthenticated(false);
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="bg-slate-800 border border-slate-700 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+          <div className="text-center mb-8">
+            <Wrench size={48} className="mx-auto text-orange-500 mb-4" />
+            <h1 className="text-3xl font-black text-white">Workshop Bay</h1>
+            <p className="text-slate-400 mt-2">Mechanic Login</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input type="email" required placeholder="fundi@motech-i.com" value={loginForm.email} onChange={e => setLoginForm({...loginForm, email: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-orange-500" />
+            <input type="password" required placeholder="fundi2026" value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-orange-500" />
+            <button type="submit" disabled={isLoggingIn} className="w-full bg-orange-600 text-white font-bold py-3 rounded-xl hover:bg-orange-700">Enter Workshop</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    // 1. PARENT CONTAINER: Lazima iwe flex-row na kuzuia kupandana
-    <div className="flex h-screen w-full bg-slate-950 font-sans text-slate-300 overflow-hidden selection:bg-blue-500/30">
-      
-      {/* 2. SIDEBAR: Imefungwa vizuri na 'shrink-0' isikunjwe */}
-      <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 shrink-0 shadow-2xl z-20">
+    <div className="min-h-screen bg-slate-100 font-sans p-4 md:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* Sidebar Header */}
-        <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-950 shrink-0">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <Wrench size={24} />
-            </div>
+        {/* HEADER */}
+        <header className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center"><Wrench size={24}/></div>
             <div>
-              <span className="text-xl font-extrabold text-white tracking-tight block">MoTech-i</span>
-              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Garage Bay</span>
-            </div>
-          </Link>
-        </div>
-
-        {/* Sidebar Menu */}
-        <div className="p-4 flex-grow overflow-y-auto custom-scrollbar flex flex-col gap-2 mt-2">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 px-3">My Workspace</p>
-          <button className="flex items-center gap-3 bg-blue-500/10 text-blue-400 px-4 py-3 rounded-xl font-bold border border-blue-500/20 transition-all w-full text-left">
-            <ClipboardList size={20} className="shrink-0" /> <span>Active Jobs</span>
-          </button>
-          <button className="flex items-center gap-3 hover:bg-slate-800 text-slate-400 hover:text-white px-4 py-3 rounded-xl font-medium transition-all w-full text-left">
-            <PackageSearch size={20} className="shrink-0" /> <span>Parts Requests</span>
-          </button>
-          <button className="flex items-center gap-3 hover:bg-slate-800 text-slate-400 hover:text-white px-4 py-3 rounded-xl font-medium transition-all w-full text-left">
-            <Clock size={20} className="shrink-0" /> <span>Timesheet</span>
-          </button>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950 shrink-0">
-          <div className="flex items-center gap-3 px-4 py-3 mb-3 bg-slate-800/50 rounded-2xl border border-slate-700">
-            <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-slate-950 font-black shrink-0">MH</div>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-white truncate">Mussa Hamis</p>
-              <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest truncate">Lead Mechanic</p>
+              <h1 className="text-2xl font-black text-slate-900">Mechanic Bay</h1>
+              <p className="text-sm font-bold text-slate-500">Welcome, {mechanicUser.name}</p>
             </div>
           </div>
-          <Link href="/login" className="flex items-center justify-center gap-3 bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 p-3 rounded-xl font-bold transition-all w-full text-sm border border-slate-700 hover:border-red-500/30">
-            <LogOut size={18} className="shrink-0" /> <span>Clock Out</span>
-          </Link>
-        </div>
-      </aside>
-
-      {/* 3. MAIN CONTENT: Ina-fill nafasi iliyobaki (flex-1) na 'min-w-0' isivimbe */}
-      <main className="flex-1 flex flex-col h-full min-w-0 bg-slate-950 relative">
-        
-        {/* Top Header */}
-        <header className="h-20 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-900 shrink-0 z-10 shadow-md">
-          <div className="flex items-center gap-3">
-            <button className="md:hidden text-slate-400 hover:text-white bg-slate-800 p-2 rounded-lg">
-              <Menu size={24} />
-            </button>
-            <h1 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-              <Activity className="text-blue-500 shrink-0" /> Work Bay
-            </h1>
-          </div>
-          <div className="flex items-center shrink-0">
-             <div className="bg-slate-950 text-slate-300 px-4 py-2 rounded-xl font-bold text-xs md:text-sm border border-slate-800 flex items-center gap-2 shadow-inner">
-               <Clock size={16} className="text-amber-500 shrink-0"/> 
-               <span>{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-             </div>
+          <div className="flex gap-3">
+            <button onClick={() => fetchJobs(mechanicUser)} className="text-blue-600 font-bold bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 hover:bg-blue-100">Refresh Data</button>
+            <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 flex items-center gap-2 font-bold bg-slate-50 px-4 py-2 rounded-lg border border-slate-100"><LogOut size={16}/> Exit Bay</button>
           </div>
         </header>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
-          <div className="max-w-6xl mx-auto space-y-8 pb-10">
-
-            {/* A. CURRENT ACTIVE JOB CARD */}
-            <div className="w-full">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-                <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full shrink-0 ${jobStatus === 'assigned' ? 'bg-amber-500' : 'bg-green-500 animate-pulse'}`}></div> 
-                  {jobStatus === 'assigned' ? 'New Assignment Pending' : 'Current Active Job'}
-                </h2>
-                <span className="text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 w-max">
-                  Queue: 2 Cars Waiting
-                </span>
-              </div>
-              
-              <div className="bg-slate-900 rounded-[1.5rem] border border-slate-800 shadow-xl overflow-hidden relative w-full">
-                
-                {/* Job Info Header */}
-                <div className="bg-slate-950 p-6 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 border-b border-slate-800 w-full">
-                  
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full xl:w-auto">
-                    <div className="w-16 h-16 bg-slate-900 border border-blue-500/30 rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
-                      <CarFront size={32} className="text-blue-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span className="bg-blue-600/20 text-blue-400 border border-blue-500/30 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider">#JC-045</span>
-                        <span className="text-slate-400 text-xs md:text-sm font-bold bg-slate-800 px-3 py-1 rounded-md">Toyota Crown 2018</span>
+        {isLoading ? (
+           <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin text-orange-600" size={40} /></div>
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-8">
+            
+            {/* COLUMN 1 & 2: MY ACTIVE JOBS (Expanded for form) */}
+            <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <h2 className="text-xl font-black text-slate-900 mb-6 border-b border-slate-100 pb-3 flex items-center gap-2"><Clock className="text-orange-500"/> My Active Jobs</h2>
+              {myJobs.length === 0 ? (
+                <div className="text-center p-12 text-slate-400"><Wrench size={48} className="mx-auto mb-4 opacity-50"/> <p className="text-lg">No active cars in your bay.</p></div>
+              ) : (
+                <div className="space-y-6">
+                  {myJobs.map(job => (
+                    <div key={job.id} className="border border-slate-200 bg-slate-50 p-6 rounded-2xl shadow-sm">
+                      
+                      {/* Car Info Header */}
+                      <div className="flex justify-between items-start mb-4 border-b border-slate-200 pb-4">
+                        <div>
+                          <h3 className="font-black text-2xl text-blue-700 uppercase">{job.vehicle.plate}</h3>
+                          <p className="font-bold text-slate-700">{job.vehicle.make} {job.vehicle.model}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${job.status === 'Ready' ? 'bg-emerald-100 text-emerald-700' : job.status === 'Waiting Parts' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>{job.status}</span>
+                        </div>
                       </div>
-                      <h3 className="text-3xl md:text-4xl font-black text-white uppercase drop-shadow-md">T 123 ABC</h3>
-                    </div>
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="w-full xl:w-auto shrink-0 flex flex-col gap-2">
-                    {jobStatus === 'assigned' && (
-                      <div className="w-full">
-                        <p className="text-[10px] md:text-xs font-bold text-amber-500 mb-2 text-left xl:text-right uppercase tracking-widest animate-pulse">Action Required</p>
+
+                      {/* Client's Reported Issue */}
+                      <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-4 mb-6">
+                        <h4 className="text-xs font-bold text-orange-600 uppercase tracking-widest mb-1 flex items-center gap-1"><AlertCircle size={14}/> Client Reported Issue:</h4>
+                        <p className="text-sm font-medium text-slate-700">{job.description || 'Routine Check / No specific issue reported.'}</p>
+                      </div>
+
+                      {/* MECHANIC DIAGNOSIS & PARTS FORM */}
+                      <div className="grid md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1"><FileText size={16} className="text-blue-600"/> Mechanic's Diagnosis</label>
+                          <textarea 
+                            rows={3} 
+                            placeholder="Andika ugonjwa uliougundua hapa..." 
+                            value={diagnostics[job.id] || ''} 
+                            onChange={e => setDiagnostics({...diagnostics, [job.id]: e.target.value})}
+                            className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1"><PackagePlus size={16} className="text-emerald-600"/> Requested Spare Parts</label>
+                          <textarea 
+                            rows={3} 
+                            placeholder="Andika vifaa unavyohitaji kutoka stoo (kama vipo)..." 
+                            value={partRequests[job.id] || ''} 
+                            onChange={e => setPartRequests({...partRequests, [job.id]: e.target.value})}
+                            className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium" 
+                          />
+                        </div>
+                      </div>
+
+                      {/* ACTION BUTTONS */}
+                      <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-200">
                         <button 
-                          onClick={() => setJobStatus('inspection')}
-                          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base border border-blue-400/50"
+                          onClick={() => handleSaveDiagnosisAndStatus(job.id, 'In Progress')}
+                          disabled={isUpdating === job.id}
+                          className="flex-1 bg-slate-900 text-white font-bold py-3 px-4 rounded-xl hover:bg-slate-800 flex justify-center items-center gap-2 text-sm transition"
                         >
-                          <ThumbsUp size={20} className="shrink-0"/> Accept Job & Start
+                          {isUpdating === job.id ? <Loader2 size={16} className="animate-spin"/> : <Wrench size={16}/>} Save Notes & Continue Fixing
+                        </button>
+                        
+                        <button 
+                          onClick={() => handleSaveDiagnosisAndStatus(job.id, 'Waiting Parts')}
+                          disabled={isUpdating === job.id}
+                          className="flex-1 bg-red-50 text-red-600 border border-red-200 font-bold py-3 px-4 rounded-xl hover:bg-red-600 hover:text-white flex justify-center items-center gap-2 text-sm transition"
+                        >
+                          Request Parts (Pause)
+                        </button>
+
+                        <button 
+                          onClick={() => handleSaveDiagnosisAndStatus(job.id, 'Ready')}
+                          disabled={isUpdating === job.id}
+                          className="flex-1 bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-emerald-700 flex justify-center items-center gap-2 text-sm transition shadow-lg shadow-emerald-600/20"
+                        >
+                          <CheckCircle2 size={16}/> Job Complete (Ready)
                         </button>
                       </div>
-                    )}
 
-                    {jobStatus === 'inspection' && (
-                      <button 
-                        onClick={() => setJobStatus('repairing')}
-                        className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base border border-amber-300"
-                      >
-                        <Play fill="currentColor" size={20} className="shrink-0"/> Begin Repairs
-                      </button>
-                    )}
-
-                    {jobStatus === 'repairing' && (
-                      <button 
-                        onClick={() => setJobStatus('completed')}
-                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base border border-emerald-300 animate-pulse"
-                      >
-                        <CheckCircle2 size={20} className="shrink-0"/> Mark as Completed
-                      </button>
-                    )}
-
-                    {jobStatus === 'completed' && (
-                      <div className="w-full bg-slate-800 text-emerald-400 border border-emerald-500/30 font-black py-4 px-6 rounded-xl flex items-center justify-center gap-3 text-sm md:text-base">
-                        <Check size={20} className="shrink-0"/> Vehicle Ready
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-
-                {/* WORKSPACE AREA */}
-                <div className={`relative flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-slate-800 transition-all duration-500 ${jobStatus === 'assigned' ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-                  
-                  {/* Lock Overlay */}
-                  {jobStatus === 'assigned' && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center p-6">
-                      <div className="bg-slate-950 border border-slate-700 p-8 rounded-3xl flex flex-col items-center gap-4 shadow-2xl text-center max-w-sm">
-                        <Info className="text-blue-500" size={40} />
-                        <p className="text-white font-black text-xl">Workspace Locked</p>
-                        <p className="text-slate-400 text-sm font-medium leading-relaxed">Please <strong className="text-blue-400">Accept the Job</strong> above to unlock checklists and parts.</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Left Column: Checklist */}
-                  <div className="flex-1 p-6 lg:p-8 bg-slate-900 min-w-0">
-                    <h4 className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-4 flex items-center gap-2">
-                      <AlertCircle size={16} className="shrink-0"/> Customer Complaints
-                    </h4>
-                    <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 text-slate-300 font-medium text-sm leading-relaxed mb-8 shadow-inner">
-                      <p>"Hear a grinding noise when breaking at high speeds. Also, the check engine light came on yesterday. Need full maintenance as well."</p>
-                    </div>
-
-                    <h4 className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-4 flex items-center gap-2">
-                      <ClipboardList size={16} className="shrink-0"/> Standard Checklist
-                    </h4>
-                    <div className="flex flex-col gap-3">
-                      <label className="flex items-start gap-4 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:bg-slate-800 transition-colors">
-                        <input type="checkbox" defaultChecked className="w-5 h-5 mt-0.5 rounded border-slate-600 bg-slate-900 text-blue-500 shrink-0" />
-                        <span className="text-slate-300 text-sm font-medium">Perform Computer OBD2 Scan & Clear Error Codes</span>
-                      </label>
-                      <label className="flex items-start gap-4 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:bg-slate-800 transition-colors">
-                        <input type="checkbox" className="w-5 h-5 mt-0.5 rounded border-slate-600 bg-slate-900 text-blue-500 shrink-0" />
-                        <span className="text-slate-300 text-sm font-medium">Inspect Front & Rear Brake Pads, Rotors, and Fluid Level</span>
-                      </label>
-                      <label className="flex items-start gap-4 p-4 rounded-xl border border-slate-700 bg-slate-800/50 cursor-pointer hover:bg-slate-800 transition-colors">
-                        <input type="checkbox" className="w-5 h-5 mt-0.5 rounded border-slate-600 bg-slate-900 text-blue-500 shrink-0" />
-                        <span className="text-slate-300 text-sm font-medium">Drain and Replace Engine Oil & Oil Filter (Synthetic)</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Parts & Notes */}
-                  <div className="w-full lg:w-96 p-6 lg:p-8 bg-slate-950 flex flex-col shrink-0">
-                    <div>
-                      <h4 className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-4 flex items-center gap-2">
-                        <PackageSearch size={16} className="shrink-0"/> Requested Parts
-                      </h4>
-                      <div className="flex flex-col gap-3 mb-6">
-                        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-start shadow-md gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-bold text-sm">Ceramic Brake Pads</p>
-                            <p className="text-[10px] text-amber-500 font-bold mt-1 flex items-center gap-1"><Clock size={12} className="shrink-0"/> Pending Store</p>
-                          </div>
-                          <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded text-xs font-black border border-slate-700 shrink-0">x1</span>
-                        </div>
-                        <div className="bg-slate-900 p-4 rounded-xl border border-emerald-900/30 flex justify-between items-start shadow-md gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-bold text-sm">Synthetic Oil (5L)</p>
-                            <p className="text-[10px] text-emerald-400 font-bold mt-1 flex items-center gap-1"><Check size={12} className="shrink-0"/> Received</p>
-                          </div>
-                          <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded text-xs font-black border border-slate-700 shrink-0">x1</span>
-                        </div>
-                      </div>
-
-                      <button className="w-full bg-slate-800 hover:bg-slate-700 text-blue-400 font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm border border-blue-500/20">
-                        <PlusCircle size={18} className="shrink-0"/> Request Part
-                      </button>
-                    </div>
-
-                    <div className="mt-8">
-                      <h4 className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-3 flex items-center gap-2">
-                        <ClipboardList size={16} className="shrink-0"/> Mechanic's Notes
-                      </h4>
-                      <textarea 
-                        rows={4} 
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none placeholder-slate-600 transition-all resize-none"
-                        placeholder="Type diagnostic notes..."
-                      ></textarea>
-                      <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all mt-3 text-sm">
-                        Save Notes
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* B. QUEUE */}
-            <div className="pt-2">
-              <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                Upcoming in Queue
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-slate-900 p-4 md:p-5 rounded-2xl border border-slate-800 flex items-center justify-between opacity-70 hover:opacity-100 transition-opacity cursor-pointer group">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="w-12 h-12 bg-slate-800 text-slate-400 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-slate-700 transition-colors">
-                      <CarFront size={20} />
+            {/* COLUMN 3: JOB POOL (AVAILABLE) */}
+            <div className="bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-800 text-white h-fit sticky top-6">
+              <h2 className="text-xl font-black text-white mb-6 border-b border-slate-800 pb-3 flex items-center gap-2"><Play className="text-emerald-400"/> Pending Jobs (Queue)</h2>
+              {availableJobs.length === 0 ? (
+                <div className="text-center p-8 text-slate-500"><CheckCircle2 size={40} className="mx-auto mb-2 opacity-50"/> <p>Garage queue is empty. Good job!</p></div>
+              ) : (
+                <div className="space-y-4">
+                  {availableJobs.map(job => (
+                    <div key={job.id} className="border border-slate-700 bg-slate-800 p-4 rounded-xl flex justify-between items-center">
+                      <div>
+                        <h3 className="font-black text-lg uppercase text-emerald-400">{job.vehicle.plate}</h3>
+                        <p className="text-sm text-slate-400 font-medium line-clamp-1">{job.serviceType}</p>
+                      </div>
+                      <button 
+                        onClick={() => handleTakeJob(job.id)}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition"
+                      >
+                        Take Car
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-bold text-sm truncate">Honda CRV • T 111 KKK</h4>
-                      <p className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wide truncate">#JC-046 • Diagnostics</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
 
           </div>
-        </div>
-      </main>
+        )}
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import {
   Users, CalendarCheck, CarFront, ShoppingCart, FileText, 
   LogOut, Search, Plus, ShieldCheck, Lock, Mail, Activity, 
   Printer, UserPlus, Wrench, AlertCircle, Loader2, CheckCircle2, 
-  MessageSquare, Send, PlusCircle, Trash2, Phone, X
+  MessageSquare, Send, PlusCircle, Trash2, Phone, X, AlertTriangle, MapPin, PhoneCall, UserCheck
 } from 'lucide-react';
 
 export default function ReceptionDashboard() {
@@ -27,10 +27,11 @@ export default function ReceptionDashboard() {
   // ==========================================
   // 3. REAL-TIME DATA STATES
   // ==========================================
-  const [stats, setStats] = useState({ carsInGarage: 0, todayBookings: 0, pendingInvoices: 0, todaySales: 0 });
+  const [stats, setStats] = useState({ carsInGarage: 0, todayBookings: 0, pendingInvoices: 0, todaySales: 0, sosAlerts: 0 });
   const [bookings, setBookings] = useState<any[]>([]);
   const [activeRepairs, setActiveRepairs] = useState<any[]>([]);
-  const [inventory, setInventory] = useState<any[]>([]); 
+  const [mechanics, setMechanics] = useState<any[]>([]);
+  const [sosAlertsList, setSosAlertsList] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
 
   // Forms
@@ -64,9 +65,19 @@ export default function ReceptionDashboard() {
   const fetchReceptionData = async () => {
     setIsLoadingData(true);
     try {
-      // TUNAVUTA DATA KUTOKA KWENYE API YETU YA PRISMA
-      const res = await fetch('/api/bookings');
+      // 1. Fetch Bookings
+      const res = await fetch('/api/bookings', { cache: 'no-store' });
       const result = await res.json();
+
+      // 2. Fetch SOS Alerts
+      const sosRes = await fetch('/api/sos', { cache: 'no-store' });
+      const sosResult = await sosRes.json();
+
+      let activeSOSCount = 0;
+      if (sosResult.success) {
+        setSosAlertsList(sosResult.data);
+        activeSOSCount = sosResult.data.filter((s:any) => s.status === 'Active').length;
+      }
 
       if (result.success) {
         const allJobs = result.data;
@@ -75,15 +86,22 @@ export default function ReceptionDashboard() {
         const pendingBookings = allJobs.filter((job: any) => job.status === 'Pending');
         const activeGarageJobs = allJobs.filter((job: any) => job.status !== 'Pending' && job.status !== 'Collected');
 
+        // Pata list ya mafundi (Mocked kwa sasa mpaka tuweke user API)
+        const mockMechanics = [
+           { id: 'm1', name: 'Master Mechanic', email: 'fundi@motech-i.com' },
+           { id: 'm2', name: 'John Kessy', email: 'kessy@motech-i.com' },
+        ];
+
+        setMechanics(mockMechanics);
         setBookings(pendingBookings);
         setActiveRepairs(activeGarageJobs);
         
-        // Update Stats
         setStats({ 
           carsInGarage: activeGarageJobs.length, 
           todayBookings: pendingBookings.length, 
           pendingInvoices: 0, 
-          todaySales: 0 
+          todaySales: 0,
+          sosAlerts: activeSOSCount
         });
       }
     } catch (error) {
@@ -102,7 +120,6 @@ export default function ReceptionDashboard() {
     setLoginError("");
 
     try {
-      // Bypass kwa sasa mpaka tuweke API ya User Authentication
       if (loginForm.email === 'desk@motech-i.com' && loginForm.password === 'desk2026') {
         const user = { id: 1, name: 'Sarah Frontdesk', email: 'desk@motech-i.com', role: 'Receptionist' };
         localStorage.setItem('motech_reception', JSON.stringify(user));
@@ -139,8 +156,8 @@ export default function ReceptionDashboard() {
       if (res.ok) {
         alert("Client and Vehicle registered successfully! Sent to Garage Tracking.");
         setNewClient({ name: '', phone: '', email: '', make: '', model: '', plate: '', vin: '', issue: '' });
-        fetchReceptionData(); // Refresh data
-        setActiveTab('tracking'); // Mpeleke aone gari kwenye Garage Tracking
+        fetchReceptionData(); 
+        setActiveTab('tracking'); 
       } else {
         alert("Failed to register. Please check details.");
       }
@@ -152,7 +169,7 @@ export default function ReceptionDashboard() {
     }
   };
 
-  // KUBADILI STATUS YA GARI KWENYE DATABASE
+  // KUBADILI STATUS YA GARI
   const handleStatusChange = async (jobId: string, newStatus: string) => {
     try {
       const res = await fetch('/api/jobs', {
@@ -160,38 +177,61 @@ export default function ReceptionDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobId, status: newStatus })
       });
-      
-      if(res.ok) {
-        fetchReceptionData(); // Vuta data mpya ku-update meza
-      } else {
-        alert("Failed to update vehicle status");
-      }
+      if(res.ok) fetchReceptionData(); 
     } catch(err) {
       console.error("Status Update Error:", err);
     }
   };
 
-  // INVOICE HANDLERS
-  const handleAddInvoiceItem = () => {
-    setInvoiceItems([...invoiceItems, { description: '', qty: 1, price: 0 }]);
+  // ASSIGN MECHANIC DIRECTLY FROM RECEPTION
+  const handleAssignMechanic = async (jobId: string, mechId: string) => {
+    if(!mechId) return;
+    const selectedMech = mechanics.find(m => m.id === mechId);
+    if(!selectedMech) return;
+
+    try {
+       await fetch('/api/jobs', {
+         method: 'PATCH',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ 
+           jobId, 
+           mechanicName: selectedMech.name, 
+           mechanicEmail: selectedMech.email,
+           status: 'In Progress' 
+         })
+       });
+       alert(`Gari limekabidhiwa kwa ${selectedMech.name} kwa ajili ya matengenezo.`);
+       fetchReceptionData();
+    } catch(err) {
+       alert("Error assigning mechanic.");
+    }
   };
 
+  // SOS RESOLVER
+  const handleResolveSOS = async (id: string) => {
+    if(confirm("Mark this SOS request as resolved?")) {
+      await fetch('/api/sos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: 'Resolved' })
+      });
+      fetchReceptionData(); 
+    }
+  };
+
+  // INVOICE HANDLERS
+  const handleAddInvoiceItem = () => setInvoiceItems([...invoiceItems, { description: '', qty: 1, price: 0 }]);
   const handleRemoveInvoiceItem = (index: number) => {
     const updated = [...invoiceItems];
     updated.splice(index, 1);
     setInvoiceItems(updated);
   };
-
   const handleInvoiceItemChange = (index: number, field: string, value: string | number) => {
     const updated: any = [...invoiceItems];
     updated[index][field] = value;
     setInvoiceItems(updated);
   };
-
-  const calculateInvoiceTotal = () => {
-    return invoiceItems.reduce((total, item) => total + (Number(item.qty) * Number(item.price)), 0);
-  };
-
+  const calculateInvoiceTotal = () => invoiceItems.reduce((total, item) => total + (Number(item.qty) * Number(item.price)), 0);
   const handleGenerateInvoice = (e: React.FormEvent) => {
     e.preventDefault();
     alert("Invoice Generated! It has been successfully synced to the Client's Dashboard.");
@@ -268,7 +308,6 @@ export default function ReceptionDashboard() {
             </div>
             
             <form onSubmit={handleGenerateInvoice} className="space-y-6">
-              {/* Client Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold mb-1 text-slate-700">Client Name</label>
@@ -279,14 +318,11 @@ export default function ReceptionDashboard() {
                   <input required type="text" placeholder="e.g. 0712345678" value={invoiceClient.phone} onChange={e => setInvoiceClient({...invoiceClient, phone: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600" />
                 </div>
               </div>
-
-              {/* Dynamic Items */}
               <div>
                 <div className="flex justify-between items-end mb-2">
                   <label className="block text-sm font-bold text-slate-700">Invoice Items (Services & Parts)</label>
                   <button type="button" onClick={handleAddInvoiceItem} className="text-blue-600 font-bold text-sm flex items-center gap-1 hover:text-blue-800"><PlusCircle size={16}/> Add Item</button>
                 </div>
-                
                 <div className="space-y-3">
                   {invoiceItems.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-3">
@@ -300,14 +336,10 @@ export default function ReceptionDashboard() {
                   ))}
                 </div>
               </div>
-
-              {/* Total Calculation */}
               <div className="bg-slate-900 text-white p-6 rounded-2xl flex justify-between items-center">
                 <span className="font-bold text-slate-400 uppercase tracking-widest text-sm">Grand Total</span>
                 <span className="font-black text-3xl text-emerald-400">{formatTZS(calculateInvoiceTotal())}</span>
               </div>
-
-              {/* Actions */}
               <div className="pt-4 flex gap-4">
                 <button type="submit" className="flex-1 bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
                   <CheckCircle2 size={20}/> Generate & Sync to Client Portal
@@ -341,17 +373,14 @@ export default function ReceptionDashboard() {
                   </label>
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-bold mb-1 text-slate-700">Recipient {messageData.type === 'SMS' ? 'Phone Number' : 'Email Address'}</label>
                 <input required type={messageData.type === 'SMS' ? 'tel' : 'email'} placeholder={messageData.type === 'SMS' ? 'e.g 0712345678' : 'e.g client@mail.com'} value={messageData.recipient} onChange={e => setMessageData({...messageData, recipient: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600" />
               </div>
-
               <div>
                 <label className="block text-sm font-bold mb-1 text-slate-700">Message Body</label>
                 <textarea required rows={4} placeholder="Type your message here..." value={messageData.message} onChange={e => setMessageData({...messageData, message: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600"></textarea>
               </div>
-
               <button type="submit" className="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-emerald-600 shadow-lg transition flex items-center justify-center gap-2">
                 <Send size={20}/> Send {messageData.type}
               </button>
@@ -359,7 +388,6 @@ export default function ReceptionDashboard() {
           </div>
         </div>
       )}
-
 
       {/* SIDEBAR NAVIGATION */}
       <aside className="w-64 bg-slate-900 text-slate-300 fixed h-full z-20 flex flex-col border-r border-slate-800">
@@ -381,6 +409,12 @@ export default function ReceptionDashboard() {
               {stats.todayBookings > 0 && <span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full">{stats.todayBookings}</span>}
             </button>
             <button onClick={() => setActiveTab('tracking')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'tracking' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-white'}`}><Wrench size={18} /> Garage Tracking</button>
+            
+            {/* SOS BUTTON - RECEPTION */}
+            <button onClick={() => setActiveTab('sos')} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'sos' ? 'bg-red-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-white'}`}>
+              <div className="flex items-center gap-3"><AlertTriangle size={18} className={activeTab !== 'sos' ? "text-red-500" : ""} /> SOS Alerts</div>
+              {stats.sosAlerts > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse">{stats.sosAlerts}</span>}
+            </button>
           </nav>
 
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3 px-4">Sales & Billing</p>
@@ -388,7 +422,6 @@ export default function ReceptionDashboard() {
             <button onClick={() => setActiveTab('pos')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'pos' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-white'}`}><ShoppingCart size={18} /> Point of Sale (POS)</button>
             <button onClick={() => setActiveTab('invoices')} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'invoices' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-white'}`}>
               <div className="flex items-center gap-3"><FileText size={18} /> Invoices</div>
-              {stats.pendingInvoices > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{stats.pendingInvoices}</span>}
             </button>
           </nav>
         </div>
@@ -409,7 +442,6 @@ export default function ReceptionDashboard() {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 ml-64 p-8 w-full min-h-screen">
-        
         <header className="flex justify-between items-center mb-8 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
           <h2 className="text-2xl font-black text-slate-800 capitalize tracking-tight">{activeTab.replace('-', ' ')}</h2>
           <div className="flex items-center gap-4">
@@ -424,7 +456,7 @@ export default function ReceptionDashboard() {
         </header>
 
         {isLoadingData ? (
-          <div className="h-64 flex flex-col items-center justify-center text-slate-400"><Loader2 className="animate-spin mb-4" size={40} /><p className="font-bold">Syncing with Admin DB...</p></div>
+          <div className="h-64 flex flex-col items-center justify-center text-slate-400"><Loader2 className="animate-spin mb-4" size={40} /><p className="font-bold">Syncing Database...</p></div>
         ) : (
           <div className="animate-in fade-in duration-500">
             
@@ -442,10 +474,10 @@ export default function ReceptionDashboard() {
                     <p className="text-slate-500 font-bold text-sm">Pending Bookings</p>
                     <h3 className="text-3xl font-black text-slate-900">{stats.todayBookings}</h3>
                   </div>
-                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center mb-4"><FileText size={24} /></div>
-                    <p className="text-slate-500 font-bold text-sm">Unpaid Invoices</p>
-                    <h3 className="text-3xl font-black text-slate-900">{stats.pendingInvoices}</h3>
+                  <div className="bg-red-600 p-6 rounded-2xl shadow-xl text-white">
+                    <div className="w-12 h-12 bg-red-500 text-white rounded-xl flex items-center justify-center mb-4"><AlertTriangle size={24} /></div>
+                    <p className="text-red-100 font-bold text-sm">Active SOS Alerts</p>
+                    <h3 className="text-2xl font-black">{stats.sosAlerts}</h3>
                   </div>
                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
                     <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4"><ShoppingCart size={24} /></div>
@@ -462,7 +494,43 @@ export default function ReceptionDashboard() {
               </div>
             )}
 
-            {/* ======================= TAB: REGISTER CLIENT (WALK-IN) ======================= */}
+            {/* ======================= TAB: SOS ======================= */}
+            {activeTab === 'sos' && (
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 mb-6 border-b pb-2 flex items-center gap-2"><AlertTriangle className="text-red-600"/> Emergency Rescue Requests</h3>
+                <div className="space-y-4">
+                  {sosAlertsList.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center">
+                      <ShieldCheck size={48} className="mx-auto text-emerald-500 mb-4" />
+                      <h3 className="text-xl font-bold text-slate-800">Coast is Clear</h3>
+                      <p className="text-slate-500 mt-2">There are no SOS emergency requests currently.</p>
+                    </div>
+                  ) : (
+                    sosAlertsList.map(alert => (
+                      <div key={alert.id} className={`p-6 rounded-2xl border-2 flex justify-between items-center ${alert.status === 'Active' ? 'bg-red-50 border-red-200 shadow-lg shadow-red-500/10' : 'bg-white border-slate-200 opacity-60'}`}>
+                        <div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="font-black text-lg text-slate-900">{alert.name}</h4>
+                            <span className={`text-xs font-bold px-2 py-1 rounded uppercase tracking-wider ${alert.status === 'Active' ? 'bg-red-600 text-white animate-pulse' : 'bg-emerald-100 text-emerald-700'}`}>{alert.status}</span>
+                            <span className="text-xs text-slate-500">{new Date(alert.createdAt).toLocaleString()}</span>
+                          </div>
+                          <p className="text-slate-700 font-medium mb-1 flex items-center gap-2"><MapPin size={16} className="text-red-500"/> Location: {alert.location}</p>
+                          <p className="text-sm text-slate-500 bg-white/50 p-2 rounded border border-slate-200 inline-block">"{alert.issue}"</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <a href={`tel:${alert.phone}`} className="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 flex items-center justify-center gap-2 transition"><PhoneCall size={16}/> Call Client</a>
+                          {alert.status === 'Active' && (
+                            <button onClick={() => handleResolveSOS(alert.id)} className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-emerald-700 flex items-center justify-center gap-2 transition"><CheckCircle2 size={16}/> Mark Resolved</button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ======================= TAB: REGISTER CLIENT ======================= */}
             {activeTab === 'register' && (
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 max-w-4xl">
                 <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4"><UserPlus className="text-blue-600"/> New Walk-in Client & Vehicle</h3>
@@ -546,7 +614,7 @@ export default function ReceptionDashboard() {
                       <tr>
                         <th className="p-4 font-bold text-slate-600 text-sm">Plate Number</th>
                         <th className="p-4 font-bold text-slate-600 text-sm">Client</th>
-                        <th className="p-4 font-bold text-slate-600 text-sm">Assigned Mechanic</th>
+                        <th className="p-4 font-bold text-slate-600 text-sm">Assign Mechanic</th>
                         <th className="p-4 font-bold text-slate-600 text-sm">Status Update</th>
                         <th className="p-4 font-bold text-slate-600 text-sm text-right">Actions</th>
                       </tr>
@@ -558,13 +626,25 @@ export default function ReceptionDashboard() {
                         activeRepairs.map((job) => (
                           <tr key={job.id} className="hover:bg-slate-50 transition border-b border-slate-100">
                             <td className="p-4 font-black text-blue-600 uppercase">{job.vehicle?.plate}</td>
-                            <td className="p-4 text-slate-600 font-medium">{job.vehicle?.client?.name}<br/><span className="text-xs text-slate-400 font-normal">{job.vehicle?.client?.phone}</span></td>
-                            <td className="p-4 text-slate-600 font-medium">{job.mechanic?.name || <span className="text-orange-500 text-xs font-bold bg-orange-50 px-2 py-1 rounded-md border border-orange-200">Unassigned</span>}</td>
+                            <td className="p-4 font-bold text-slate-700">{job.vehicle?.client?.name}</td>
+                            <td className="p-4">
+                              {job.mechanic ? (
+                                <div className="flex items-center gap-2 text-sm text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 w-fit"><UserCheck size={14}/> {job.mechanic.name}</div>
+                              ) : (
+                                <select 
+                                  onChange={(e) => handleAssignMechanic(job.id, e.target.value)}
+                                  className="bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold rounded-lg px-2 py-1.5 outline-none"
+                                >
+                                  <option value="">Assign Mechanic</option>
+                                  {mechanics.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                </select>
+                              )}
+                            </td>
                             <td className="p-4">
                               <select 
                                 value={job.status}
                                 onChange={(e) => handleStatusChange(job.id, e.target.value)}
-                                className={`bg-slate-50 border border-slate-200 text-sm font-bold rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-600 ${job.status === 'Ready' ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-slate-700'}`}
+                                className={`bg-slate-50 border border-slate-200 text-xs font-bold rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-600 ${job.status === 'Ready' ? 'text-emerald-600 border-emerald-200 bg-emerald-50' : 'text-slate-700'}`}
                               >
                                 <option value="Pending">🕒 Pending</option>
                                 <option value="In Progress">🛠️ In Progress</option>
@@ -588,8 +668,6 @@ export default function ReceptionDashboard() {
             {/* ======================= TAB: POS (SPARE PARTS SALES) ======================= */}
             {activeTab === 'pos' && (
               <div className="flex flex-col lg:flex-row gap-6 h-[75vh]">
-                
-                {/* Left: Inventory List */}
                 <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
                   <div className="p-4 border-b border-slate-200 bg-slate-50">
                     <input type="text" placeholder="Search part to sell..." className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-600 text-sm font-medium" />
@@ -601,7 +679,6 @@ export default function ReceptionDashboard() {
                   </div>
                 </div>
 
-                {/* Right: Shopping Cart & Checkout */}
                 <div className="w-full lg:w-96 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
                   <div className="p-4 border-b border-slate-200 bg-slate-900 text-white font-black flex justify-between items-center">
                     <span>Current Sale</span>
@@ -619,7 +696,6 @@ export default function ReceptionDashboard() {
                     </button>
                   </div>
                 </div>
-
               </div>
             )}
 

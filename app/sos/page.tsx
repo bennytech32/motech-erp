@@ -2,234 +2,91 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, MapPin, Navigation, CarFront, Phone, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, MapPin, Phone, User, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 export default function SOSPage() {
-  const [isLocating, setIsLocating] = useState(false);
-  const [locationStatus, setLocationStatus] = useState<string>('');
-  const [gpsData, setGpsData] = useState<{ lat: number, lng: number } | null>(null);
+  const [formData, setFormData] = useState({ name: '', phone: '', location: '', issue: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    carPlate: '',
-    issue: ''
-  });
-
-  // HII INAOMBA RUHUSA NA KUVUTA LOCATION YA SIMU YA MTEJA
-  const handleGetLocation = () => {
-    setIsLocating(true);
-    setLocationStatus('Inatafuta GPS yako (Locating)...');
-
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setGpsData({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-          setLocationStatus('Imepata Eneo Lako ✅');
-          setIsLocating(false);
-        },
-        (error) => {
-          console.error("GPS Error: ", error);
-          setLocationStatus('Kuna shida kupata Location. Tafadhali washa GPS/Location kwenye simu yako.');
-          setIsLocating(false);
-        }
-      );
-    } else {
-      setLocationStatus('Simu yako au Browser hai-support GPS.');
-      setIsLocating(false);
-    }
-  };
-
-  // HII INATUMA DATA KWENYE DATABASE YETU YA NEON (FOR REAL)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!gpsData) {
-      alert("Tafadhali bonyeza 'Tafuta Eneo Lako' ili tupate Location yako kwanza!");
-      return;
-    }
-
     setIsSubmitting(true);
-
     try {
-      // Tuma data kwenye API Route yetu ya Neon
-      const response = await fetch('/api/sos', {
+      const res = await fetch('/api/sos', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          phone: formData.phone,
-          carPlate: formData.carPlate,
-          issue: formData.issue,
-          lat: gpsData.lat,
-          lng: gpsData.lng,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert("SOS Imetumwa Kikamilifu! Timu ya Uokoaji inakuja ulipo sasa hivi.");
-        // Inamrudisha mteja Home baada ya kutuma
-        window.location.href = "/"; 
-      } else {
-        alert("Kuna shida mtandaoni, tafadhali jaribu tena.");
-      }
+      if (res.ok) setIsSuccess(true);
     } catch (error) {
-      alert("Tatizo la mtandao. Tafadhali piga simu moja kwa moja.");
+      alert("Failed to send SOS. Please call us directly.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl shadow-red-900/20">
+          <CheckCircle2 size={64} className="mx-auto text-emerald-500 mb-6 animate-bounce" />
+          <h2 className="text-3xl font-black text-white mb-2">SOS Sent!</h2>
+          <p className="text-slate-400 mb-8">Stay calm. Our emergency response team has received your location and will contact you in less than 2 minutes.</p>
+          <a href="tel:+255758406251" className="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 flex justify-center items-center gap-2 mb-4"><Phone size={20}/> Call Us Directly</a>
+          <Link href="/" className="text-slate-500 hover:text-white font-bold">Return to Home</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-red-200 pb-20">
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
+      <div className="absolute inset-0 bg-red-600/5 blur-[150px] rounded-full"></div>
       
-      {/* HEADER NDOGO */}
-      <nav className="bg-white border-b border-slate-200 py-4 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition">
-            <ArrowLeft size={20} /> Back to Home
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="bg-red-600 p-1.5 rounded-lg text-white">
-              <AlertTriangle size={20} />
-            </div>
-            <span className="font-extrabold text-slate-900">MoTech-i SOS</span>
+      <div className="w-full max-w-lg relative z-10">
+        <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white font-bold mb-8 transition"><ArrowLeft size={20}/> Back</Link>
+        
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/30 animate-pulse">
+            <AlertTriangle size={32} />
           </div>
+          <h1 className="text-4xl font-black text-white tracking-tight">Emergency SOS</h1>
+          <p className="text-slate-400 mt-2">Stranded? Request immediate rapid response rescue.</p>
         </div>
-      </nav>
 
-      {/* HERO SECTION YA SOS */}
-      <section className="bg-red-600 pt-16 pb-32 px-4 text-center rounded-b-[3rem] shadow-xl">
-        <div className="max-w-3xl mx-auto">
-          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-            <AlertTriangle size={40} className="text-white" />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">Omba Uokoaji Haraka</h1>
-          <p className="text-red-100 text-lg md:text-xl font-medium">
-            Tafadhali jaza fomu fupi hapa chini na uruhusu simu yako kutupa Location ili Towing Truck ikufuate sasa hivi.
-          </p>
-        </div>
-      </section>
-
-      {/* SOS FORM */}
-      <div className="max-w-2xl mx-auto px-4 -mt-20 relative z-10">
-        <form onSubmit={handleSubmit} className="bg-white p-6 md:p-10 rounded-[2rem] shadow-2xl border border-slate-100">
-          
-          {/* STEP 1: GPS LOCATION (GEOLOCATION API) */}
-          <div className="mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-              <Navigation size={20} className="text-blue-600" /> 1. Eneo Ulipo Sasa
-            </h3>
-            <p className="text-sm text-slate-500 mb-4">Mitaa inachanganya, gusa kitufe tupate GPS yako kamili.</p>
-            
-            <button 
-              type="button"
-              onClick={handleGetLocation}
-              disabled={isLocating}
-              className={`w-full py-4 rounded-xl font-bold flex justify-center items-center gap-2 transition-all ${
-                gpsData ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
-              }`}
-            >
-              {isLocating ? (
-                <span className="animate-pulse">Inatafuta...</span>
-              ) : gpsData ? (
-                <><CheckCircle2 size={20} /> Eneo Limepatikana</>
-              ) : (
-                <><MapPin size={20} /> Tafuta Eneo Langu (Get Location)</>
-              )}
-            </button>
-            
-            {/* Inaonyesha Majibu ya GPS */}
-            {locationStatus && (
-              <p className={`mt-3 text-sm font-bold text-center ${gpsData ? 'text-emerald-600' : 'text-slate-600'}`}>
-                {locationStatus}
-              </p>
-            )}
-            {gpsData && (
-              <p className="text-xs text-center text-slate-400 mt-1 font-mono">
-                Lat: {gpsData.lat.toFixed(4)}, Lng: {gpsData.lng.toFixed(4)}
-              </p>
-            )}
-          </div>
-
-          <hr className="border-slate-100 mb-8" />
-
-          {/* STEP 2: MAELEZO YA GARI NA SHIDA */}
-          <h3 className="text-lg font-bold text-slate-900 mb-4">2. Taarifa Zako na Tatizo</h3>
-          
+        <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
           <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Jina Lako</label>
-                <input 
-                  type="text" required placeholder="Mf. John Doe"
-                  value={formData.name}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition"
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Namba ya Simu</label>
-                <div className="relative">
-                  <Phone size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input 
-                    type="tel" required placeholder="07XX XXX XXX"
-                    value={formData.phone}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition"
-                    onChange={e => setFormData({...formData, phone: e.target.value})}
-                  />
-                </div>
-              </div>
-            </div>
-
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Aina na Namba ya Gari</label>
+              <label className="block text-sm font-bold text-slate-400 mb-2">Your Name</label>
               <div className="relative">
-                <CarFront size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input 
-                  type="text" required placeholder="Mf. Toyota Crown T 123 ABC"
-                  value={formData.carPlate}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition"
-                  onChange={e => setFormData({...formData, carPlate: e.target.value})}
-                />
+                <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500" placeholder="John Doe" />
               </div>
             </div>
-
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Gari Lina Shida Gani? (Elezea kidogo)</label>
-              <textarea 
-                required rows={3} placeholder="Mf. Gari imezima ghafla kwenye taa, inatoa moshi..."
-                value={formData.issue}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600 focus:border-transparent outline-none transition resize-none"
-                onChange={e => setFormData({...formData, issue: e.target.value})}
-              ></textarea>
+              <label className="block text-sm font-bold text-slate-400 mb-2">Phone Number (We will call you now)</label>
+              <div className="relative">
+                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500" placeholder="0712345678" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-400 mb-2">Exact Location / Landmark</label>
+              <div className="relative">
+                <MapPin size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input required type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500" placeholder="e.g Makongo Juu near the total station" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-400 mb-2">What happened?</label>
+              <textarea required rows={3} value={formData.issue} onChange={e => setFormData({...formData, issue: e.target.value})} className="w-full px-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500" placeholder="e.g Car won't start, flat tire, accident..."></textarea>
             </div>
           </div>
 
-          {/* SUBMIT BUTTON */}
-          <button 
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full font-black text-lg py-5 rounded-xl transition-all mt-8 flex justify-center items-center gap-2 ${
-              isSubmitting 
-                ? 'bg-red-400 text-white cursor-not-allowed' 
-                : 'bg-red-600 text-white shadow-xl shadow-red-600/30 hover:bg-red-700'
-            }`}
-          >
-            {isSubmitting ? (
-              <span className="animate-pulse">INATUMA TAARIFA...</span>
-            ) : (
-              <><AlertTriangle size={24} /> TUMA MAOMBI YA UOKOAJI</>
-            )}
+          <button type="submit" disabled={isSubmitting} className="w-full mt-8 bg-red-600 text-white font-black text-lg py-4 rounded-xl hover:bg-red-700 shadow-lg shadow-red-600/20 transition flex justify-center items-center gap-2">
+            {isSubmitting ? <Loader2 className="animate-spin" size={24} /> : <><AlertTriangle size={20}/> Dispatch Rescue Team</>}
           </button>
-          
         </form>
       </div>
     </div>
