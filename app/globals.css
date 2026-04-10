@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer utilities {
   /* Ficha scrollbar kwenye menu za pembeni lakini iruhusu i-scroll */
