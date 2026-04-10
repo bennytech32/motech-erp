@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { 
   Wrench, ShieldCheck, Clock, CarFront, ArrowRight, CheckCircle2, 
   MapPin, Star, Search, Calendar, Store, PlayCircle, Menu, AlertTriangle, 
-  X, Award, ThumbsUp, Zap, ChevronRight, Quote, Plus, Minus, Phone, Mail, MessageCircle
+  X, Award, ThumbsUp, Zap, ChevronRight, Quote, Plus, Minus, Phone, Mail, MessageCircle,
+  Smartphone, Apple, Play, AlertCircle
 } from 'lucide-react';
 
 export default function Home() {
@@ -537,6 +538,106 @@ export default function Home() {
               <p className="text-slate-400 text-sm mb-4">Drop by our high-tech facility.</p>
               <p className="text-white font-black text-lg mt-auto">Makongo Juu, Dar es Salaam</p>
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= APP COMING SOON SECTION ================= */}
+      <section className="py-20 bg-slate-50 relative overflow-hidden border-t border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="bg-slate-900 rounded-[3rem] p-8 md:p-16 overflow-hidden relative shadow-2xl border border-slate-800">
+            
+            {/* Glow effect ya Nyuma */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+
+            <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
+              
+              {/* UPANDE WA KUSHOTO: Maelezo */}
+              <div>
+                <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 text-blue-300 px-4 py-2 rounded-full font-bold text-sm mb-6">
+                  <Smartphone size={16} /> Mobile App in Development
+                </div>
+                <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
+                  Garage yako, <br/>Kiganjani mwako.
+                </h2>
+                <p className="text-slate-400 text-lg mb-8 leading-relaxed">
+                  Hivi karibuni utaweza kufuatilia matengenezo ya gari lako LIVE, kupokea taarifa za dharura, na kufanya bookings kwa urahisi zaidi kupitia MoTech-i App.
+                </p>
+                
+                {/* Vitufe vya App Store na Play Store */}
+                <div className="flex flex-wrap gap-4">
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 opacity-60 cursor-not-allowed">
+                    <Apple size={32} className="text-white" />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Coming Soon on</p>
+                      <p className="text-lg font-black text-white leading-none mt-1">App Store</p>
+                    </div>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 opacity-60 cursor-not-allowed">
+                    <Play size={32} className="text-emerald-400" />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Coming Soon on</p>
+                      <p className="text-lg font-black text-white leading-none mt-1">Google Play</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* UPANDE WA KULIA: Mchoro wa Simu (Phone Mockup) */}
+              <div className="flex justify-center lg:justify-end relative mt-10 lg:mt-0">
+                 {/* Umbo la Simu */}
+                 <div className="w-[280px] h-[580px] bg-slate-950 border-[8px] border-slate-800 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col transform rotate-2 hover:rotate-0 transition duration-500">
+                    {/* Kamera ya Simu (Notch) */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-20"></div>
+                    
+                    {/* Screen ya Simu */}
+                    <div className="flex-1 bg-slate-50 p-4 pt-10 flex flex-col">
+                      {/* Header ya App */}
+                      <div className="flex justify-between items-center mb-6">
+                         <div>
+                           <p className="text-xs font-bold text-slate-400">Welcome back,</p>
+                           <p className="text-sm font-black text-slate-900">John Doe</p>
+                         </div>
+                         <div className="w-8 h-8 bg-blue-600 rounded-full border-2 border-white shadow-sm"></div>
+                      </div>
+                      
+                      {/* Live Tracking Card */}
+                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4 relative overflow-hidden">
+                         <div className="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
+                         <p className="text-[10px] font-black text-orange-600 mb-1 tracking-widest">LIVE TRACKING</p>
+                         <h4 className="font-black text-slate-900 text-sm">Toyota Land Cruiser</h4>
+                         <div className="mt-3 flex items-center gap-2">
+                           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                             <div className="w-[60%] h-full bg-emerald-500 rounded-full animate-pulse"></div>
+                           </div>
+                           <span className="text-xs font-black text-emerald-600">60%</span>
+                         </div>
+                         <p className="text-[10px] font-bold text-slate-500 mt-2 flex items-center gap-1"><Wrench size={10}/> Mechanic Notes: Fixing Engine...</p>
+                      </div>
+
+                      {/* App Buttons */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-blue-50 p-3 rounded-2xl border border-blue-100 flex flex-col items-center justify-center text-center">
+                          <CarFront size={20} className="text-blue-600 mb-2"/>
+                          <p className="text-[10px] font-bold text-slate-700">My Garage</p>
+                        </div>
+                        <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 flex flex-col items-center justify-center text-center">
+                          <CheckCircle2 size={20} className="text-emerald-600 mb-2"/>
+                          <p className="text-[10px] font-bold text-slate-700">Bookings</p>
+                        </div>
+                      </div>
+                      
+                      {/* SOS Button App */}
+                      <div className="mt-auto mb-4 bg-red-600 p-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-red-600/30">
+                        <AlertCircle size={16} className="text-white"/>
+                        <p className="text-xs font-black text-white">Emergency SOS</p>
+                      </div>
+
+                    </div>
+                 </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </section>

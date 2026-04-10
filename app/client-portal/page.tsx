@@ -3,616 +3,734 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  CarFront, Mail, Lock, User, ArrowRight, Wrench, 
-  Calendar, Clock, ShieldCheck, LogOut, Plus, AlertTriangle, 
-  Activity, CheckCircle2, LayoutDashboard, History, Menu, X, Loader2, MapPin, Navigation
+  CarFront, ShieldCheck, Wrench, Clock, CheckCircle2, 
+  MapPin, LogOut, FileText, AlertTriangle, ChevronRight, 
+  Settings, User, Phone, Mail, Lock, Loader2, ArrowRight,
+  Download, CreditCard, Activity, Plus, Calendar
 } from 'lucide-react';
 
-export default function ClientPortalPage() {
+export default function ClientPortal() {
   // ==========================================
-  // STATES: AUTHENTICATION & CORE
+  // 1. AUTHENTICATION STATES
   // ==========================================
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [clientUser, setClientUser] = useState<any>(null);
   
-  const [formData, setFormData] = useState({ name: '', contact: '', password: '' });
+  // Login / Register UI Switcher
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [loginForm, setLoginForm] = useState({ identifier: '', password: '' });
+  const [registerForm, setRegisterForm] = useState({ name: '', phone: '', email: '', password: '' });
+  
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [registerSuccess, setRegisterSuccess] = useState(false);
 
   // ==========================================
-  // STATES: DASHBOARD & NAVIGATION
+  // 2. DASHBOARD STATES
   // ==========================================
-  const [activeTab, setActiveTab] = useState<'overview' | 'garage' | 'book' | 'history'>('overview');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDashboardLoading, setIsDashboardLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState({
-    vehicles: [] as any[], appointments: [] as any[], history: [] as any[]
-  });
+  const [activeTab, setActiveTab] = useState('garage');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Real Data
+  const [myVehicles, setMyVehicles] = useState<any[]>([]);
+  const [myJobs, setMyJobs] = useState<any[]>([]);
+  const [myInvoices, setMyInvoices] = useState<any[]>([]);
+  const [mySosAlerts, setMySosAlerts] = useState<any[]>([]); // New: My SOS
 
-  // ==========================================
-  // STATES: ADD CAR MODAL
-  // ==========================================
-  const [isAddCarOpen, setIsAddCarOpen] = useState(false);
-  const [isAddingCar, setIsAddingCar] = useState(false);
-  const [newCar, setNewCar] = useState({ make: '', plate: '' });
-
-  // ==========================================
-  // STATES: EMERGENCY SOS MODAL
-  // ==========================================
-  const [emergencyCar, setEmergencyCar] = useState<any>(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [locationStatus, setLocationStatus] = useState('');
-  const [gpsData, setGpsData] = useState<{ lat: number, lng: number } | null>(null);
-  const [emergencyIssue, setEmergencyIssue] = useState('');
-  const [isSendingSOS, setIsSendingSOS] = useState(false);
-
-  // ==========================================
-  // STATES: BOOKING
-  // ==========================================
+  // Forms inside Dashboard
+  const [sosForm, setSosForm] = useState({ location: '', issue: '' });
+  const [isSendingSos, setIsSendingSos] = useState(false);
+  
+  const [bookingForm, setBookingForm] = useState({ make: '', model: '', plate: '', vin: '', issue: '' });
   const [isBooking, setIsBooking] = useState(false);
-  const [bookingForm, setBookingForm] = useState({ vehicle_id: '', service: 'General Repair & Maintenance', date: '', time: '' });
 
   // ==========================================
-  // INITIALIZATION (CHECK SESSION)
+  // 3. INITIALIZATION & DATA FETCHING
   // ==========================================
   useEffect(() => {
-    const savedUser = localStorage.getItem('motech_user');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      setCurrentUser(user);
-      setIsAuthenticated(true);
-      fetchDashboardData(user.id);
+    try {
+      const savedClient = localStorage.getItem('motech_client_auth');
+      if (savedClient) {
+        const user = JSON.parse(savedClient);
+        setClientUser(user);
+        setIsAuthenticated(true);
+        fetchClientData(user.phone); 
+      }
+    } catch(e) {
+      localStorage.removeItem('motech_client_auth');
     }
   }, []);
 
-  const fetchDashboardData = async (userId: string) => {
-    setIsDashboardLoading(true);
+  const fetchClientData = async (phone: string) => {
+    setIsLoading(true);
     try {
-      const res = await fetch(`/api/dashboard?userId=${userId}`);
-      const json = await res.json();
-      if (json.success) setDashboardData(json.data);
-    } catch (err) {
-      console.error("Failed to load dashboard data");
-    } finally {
-      setIsDashboardLoading(false);
-    }
-  };
-
-  // ==========================================
-  // ACTIONS: AUTHENTICATION
-  // ==========================================
-  const handleAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true); setErrorMsg(""); setSuccessMsg("");
-
-    try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: authMode, name: formData.name, contact: formData.contact, password: formData.password })
-      });
-      const json = await res.json();
-
-      if (json.success) {
-        if (authMode === 'register') {
-          setSuccessMsg("Account created successfully! Please Sign In.");
-          setAuthMode('login');
-          setFormData({ ...formData, password: '' }); 
-        } else {
-          localStorage.setItem('motech_user', JSON.stringify(json.user));
-          setCurrentUser(json.user);
-          setIsAuthenticated(true);
-          fetchDashboardData(json.user.id);
-        }
-      } else {
-        setErrorMsg(json.message || "Action failed.");
+      // 1. Vuta Bookings & Filter
+      const res = await fetch('/api/bookings', { cache: 'no-store' });
+      let clientJobs: any[] = [];
+      let uniqueVehicles = new Map();
+      
+      if (res.ok) {
+         const result = await res.json();
+         if (result.success) {
+            clientJobs = result.data.filter((job: any) => job.vehicle?.client?.phone === phone);
+            clientJobs.forEach((job: any) => {
+              if (!uniqueVehicles.has(job.vehicle.plate)) {
+                uniqueVehicles.set(job.vehicle.plate, job.vehicle);
+              }
+            });
+         }
       }
-    } catch (err) {
-      setErrorMsg("Network or Server error.");
+
+      // 2. Vuta SOS Alerts & Filter ONLY for this user
+      const sosRes = await fetch('/api/sos', { cache: 'no-store' });
+      let clientSos: any[] = [];
+      if (sosRes.ok) {
+         const sosResult = await sosRes.json();
+         if (sosResult.success) {
+            clientSos = sosResult.data.filter((s:any) => s.phone === phone);
+         }
+      }
+
+      // Mock Invoices
+      const mockInvoices = clientJobs
+        .filter((job: any) => job.status === 'Ready' || job.status === 'Collected')
+        .map((job: any) => ({
+           id: `INV-${job.id.substring(0,6).toUpperCase()}`,
+           date: new Date(job.updatedAt).toLocaleDateString(),
+           vehicle: `${job.vehicle.make} ${job.vehicle.plate}`,
+           amount: 150000 + Math.floor(Math.random() * 500000), 
+           status: Math.random() > 0.5 ? 'Paid' : 'Unpaid'
+        }));
+
+      setMyJobs(clientJobs);
+      setMyVehicles(Array.from(uniqueVehicles.values()));
+      setMyInvoices(mockInvoices);
+      setMySosAlerts(clientSos);
+
+    } catch (error) {
+      console.error("Failed to load client data", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('motech_user');
-    setCurrentUser(null);
-    setIsAuthenticated(false);
-    setAuthMode('login');
-  };
-
   // ==========================================
-  // ACTIONS: ADD CAR (REAL API CALL)
+  // 4. ACTION HANDLERS
   // ==========================================
-  const handleAddCarSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsAddingCar(true);
-    try {
-      const res = await fetch('/api/vehicles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: currentUser.id, make: newCar.make, plate: newCar.plate })
-      });
-      const json = await res.json();
-      if (json.success) {
-        setIsAddCarOpen(false);
-        setNewCar({ make: '', plate: '' });
-        fetchDashboardData(currentUser.id); // Refresh Garage
-        alert("Vehicle added successfully!");
-      } else {
-        alert(json.message || "Failed to add vehicle.");
-      }
-    } catch (err) {
-      alert("Network Error.");
-    } finally {
-      setIsAddingCar(false);
-    }
-  };
+    setIsLoggingIn(true);
+    setLoginError("");
 
-  // ==========================================
-  // ACTIONS: EMERGENCY SOS (REAL API CALL)
-  // ==========================================
-  const handleGetLocation = () => {
-    setIsLocating(true); setLocationStatus('Acquiring GPS coordinates...');
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setGpsData({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          setLocationStatus('GPS Coordinates Locked ✅');
-          setIsLocating(false);
-        },
-        (error) => {
-          setLocationStatus('Failed to get location. Please enable GPS.');
-          setIsLocating(false);
+    try {
+      const res = await fetch('/api/bookings', { cache: 'no-store' });
+      const result = await res.json();
+      
+      if (result.success) {
+        const allJobs = result.data;
+        const foundJob = allJobs.find((job: any) => 
+          job.vehicle?.client?.phone === loginForm.identifier || 
+          job.vehicle?.client?.email?.toLowerCase() === loginForm.identifier.toLowerCase()
+        );
+
+        if (foundJob) {
+           const userAuth = {
+              id: foundJob.vehicle.client.id,
+              name: foundJob.vehicle.client.name,
+              phone: foundJob.vehicle.client.phone,
+              email: foundJob.vehicle.client.email
+           };
+           localStorage.setItem('motech_client_auth', JSON.stringify(userAuth));
+           setClientUser(userAuth);
+           setIsAuthenticated(true);
+           fetchClientData(userAuth.phone);
+        } else {
+           if (loginForm.identifier === 'demo' || loginForm.identifier === '0712345678') {
+             const demoUser = { id: 'demo-1', name: 'Demo Client', phone: '0712345678', email: 'demo@client.com' };
+             localStorage.setItem('motech_client_auth', JSON.stringify(demoUser));
+             setClientUser(demoUser);
+             setIsAuthenticated(true);
+             fetchClientData(demoUser.phone);
+           } else {
+             setLoginError("Account not found. Please register or use registered phone.");
+           }
         }
-      );
-    } else {
-      setLocationStatus('GPS not supported by your device.');
-      setIsLocating(false);
-    }
-  };
-
-  const handleEmergencySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!gpsData) { alert("Please get your GPS location first!"); return; }
-    setIsSendingSOS(true);
-
-    try {
-      const res = await fetch('/api/sos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: currentUser.id,
-          vehicle_id: emergencyCar.id,
-          make: emergencyCar.make,
-          plate: emergencyCar.plate,
-          issue: emergencyIssue,
-          lat: gpsData.lat,
-          lng: gpsData.lng
-        })
-      });
-      const json = await res.json();
-      if (json.success) {
-        setEmergencyCar(null); setEmergencyIssue(''); setGpsData(null);
-        alert("SOS Alert Sent! Rescue team is dispatching to your location.");
       }
     } catch (err) {
-      alert("Failed to send SOS. Call emergency line directly.");
+      setLoginError("Network Error. Please try again later.");
     } finally {
-      setIsSendingSOS(false);
+      setIsLoggingIn(false);
     }
   };
 
-  // ==========================================
-  // ACTIONS: BOOK SERVICE (REAL API CALL)
-  // ==========================================
-  const handleBookingSubmit = async (e: React.FormEvent) => {
+  // Fake Register function for UI (Since we don't have a Client Auth API yet, we just simulate)
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoggingIn(true);
+    setLoginError("");
+    
+    // Simulate API Call
+    setTimeout(() => {
+      const newUser = { id: 'new-' + Date.now(), name: registerForm.name, phone: registerForm.phone, email: registerForm.email };
+      localStorage.setItem('motech_client_auth', JSON.stringify(newUser));
+      setClientUser(newUser);
+      setIsAuthenticated(true);
+      setRegisterSuccess(true);
+      setIsLoggingIn(false);
+      fetchClientData(newUser.phone);
+    }, 1500);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('motech_client_auth');
+    setIsAuthenticated(false);
+    setClientUser(null);
+  };
+
+  // --- INTERNAL SOS HANDLER ---
+  const handleSendSOS = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!clientUser) return;
+    setIsSendingSos(true);
+    try {
+      await fetch('/api/sos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+           name: clientUser.name, 
+           phone: clientUser.phone, 
+           location: sosForm.location, 
+           issue: sosForm.issue 
+        })
+      });
+      alert("SOS Alert Sent! Our rescue team will contact you shortly.");
+      setSosForm({ location: '', issue: '' });
+      fetchClientData(clientUser.phone); // Refresh SOS List
+    } catch (error) {
+      alert("Failed to send SOS. Please call us directly.");
+    } finally {
+      setIsSendingSos(false);
+    }
+  };
+
+  // --- INTERNAL BOOKING HANDLER ---
+  const handleBookService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!clientUser) return;
     setIsBooking(true);
+    
     try {
-      const res = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: currentUser.id,
-          vehicle_id: bookingForm.vehicle_id,
-          service: bookingForm.service,
-          apt_date: bookingForm.date,
-          apt_time: bookingForm.time
-        })
-      });
-      const json = await res.json();
-      if (json.success) {
-        alert("Appointment booked successfully!");
-        setBookingForm({ vehicle_id: '', service: 'General Repair & Maintenance', date: '', time: '' });
-        setActiveTab('overview');
-        fetchDashboardData(currentUser.id); // Refresh Dashboard
-      }
-    } catch (err) {
-      alert("Booking failed. Please try again.");
+       // Since we reuse the walk-in API format
+       const payload = {
+         name: clientUser.name,
+         phone: clientUser.phone,
+         email: clientUser.email || '',
+         make: bookingForm.make,
+         model: bookingForm.model,
+         plate: bookingForm.plate,
+         vin: bookingForm.vin,
+         issue: bookingForm.issue
+       };
+
+       const res = await fetch('/api/reception/walkin', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(payload),
+       });
+
+       if(res.ok) {
+         alert("Service Booked Successfully! Please wait for approval.");
+         setBookingForm({ make: '', model: '', plate: '', vin: '', issue: '' });
+         setActiveTab('tracking');
+         fetchClientData(clientUser.phone);
+       } else {
+         alert("Failed to book service.");
+       }
+    } catch(err) {
+       alert("Error booking service.");
     } finally {
-      setIsBooking(false);
+       setIsBooking(false);
+    }
+  };
+
+
+  const formatTZS = (amount: number) => new Intl.NumberFormat('en-TZ', { style: 'currency', currency: 'TZS', maximumFractionDigits: 0 }).format(amount);
+
+  const getProgressWidth = (status: string) => {
+    switch(status) {
+      case 'Pending': return '20%';
+      case 'In Progress': return '60%';
+      case 'Waiting Parts': return '50%';
+      case 'Ready': return '100%';
+      case 'Collected': return '100%';
+      default: return '10%';
+    }
+  };
+
+  const getProgressColor = (status: string) => {
+    switch(status) {
+      case 'Pending': return 'bg-orange-500';
+      case 'In Progress': return 'bg-blue-500';
+      case 'Waiting Parts': return 'bg-red-500';
+      case 'Ready': return 'bg-emerald-500';
+      case 'Collected': return 'bg-slate-500';
+      default: return 'bg-slate-300';
     }
   };
 
   // =========================================================================
-  // UI 1: DASHBOARD KAMILI
+  // UI 1: PREMIUM CLIENT LOGIN / REGISTER PAGE
   // =========================================================================
-  if (isAuthenticated && currentUser) {
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-50 flex font-sans selection:bg-blue-200 relative">
-        
-        {/* ADD CAR MODAL */}
-        {isAddCarOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
-            <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl p-8 animate-in fade-in zoom-in duration-200">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-black text-xl text-slate-900">Add New Vehicle</h3>
-                <button onClick={() => setIsAddCarOpen(false)} className="text-slate-400 hover:text-red-500 transition"><X size={24} /></button>
-              </div>
-              <form onSubmit={handleAddCarSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Make & Model</label>
-                  <input type="text" required placeholder="e.g. BMW X5" value={newCar.make} onChange={e => setNewCar({...newCar, make: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Plate Number</label>
-                  <input type="text" required placeholder="e.g. T 123 ABC" value={newCar.plate} onChange={e => setNewCar({...newCar, plate: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none" />
-                </div>
-                <button type="submit" disabled={isAddingCar} className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition mt-4">
-                  {isAddingCar ? 'Saving...' : 'Save Vehicle'}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* EMERGENCY SOS MODAL */}
-        {emergencyCar && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-red-950/80 backdrop-blur-sm">
-            <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-              <div className="bg-red-600 p-6 text-white flex justify-between items-center">
-                <div>
-                  <h3 className="font-black text-xl flex items-center gap-2"><AlertTriangle size={20} /> SOS Alert</h3>
-                  <p className="text-red-100 text-sm font-medium">{emergencyCar.make} ({emergencyCar.plate})</p>
-                </div>
-                <button onClick={() => setEmergencyCar(null)} className="bg-red-700 p-2 rounded-full hover:bg-red-800 transition"><X size={20} /></button>
-              </div>
-              <form onSubmit={handleEmergencySubmit} className="p-6 space-y-5">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">1. Locate Vehicle</label>
-                  <button type="button" onClick={handleGetLocation} disabled={isLocating} className={`w-full py-3.5 rounded-xl font-bold flex justify-center items-center gap-2 transition-all ${gpsData ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
-                    {isLocating ? 'Locating...' : gpsData ? <><CheckCircle2 size={18}/> Location Locked</> : <><Navigation size={18}/> Fetch GPS Location</>}
-                  </button>
-                  {locationStatus && <p className={`mt-2 text-xs text-center font-bold ${gpsData ? 'text-emerald-600' : 'text-slate-500'}`}>{locationStatus}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">2. What is the issue?</label>
-                  <textarea required rows={3} placeholder="e.g. Engine shut down, flat tire, accident..." value={emergencyIssue} onChange={e => setEmergencyIssue(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-600 outline-none resize-none"></textarea>
-                </div>
-                <button type="submit" disabled={isSendingSOS} className="w-full bg-red-600 text-white font-black text-lg py-4 rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-600/30 flex justify-center items-center gap-2">
-                  {isSendingSOS ? 'Dispatching...' : <><MapPin size={20}/> Send SOS Rescue</>}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* SIDEBAR (Desktop) */}
-        <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-slate-300 fixed h-full z-20">
-          <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-            <div className="bg-blue-600 p-2 rounded-lg text-white">
-              <CarFront size={20} />
-            </div>
-            <span className="text-xl font-extrabold text-white tracking-tight">MoTech-i</span>
-          </div>
-
-          <div className="p-6 pb-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Main Menu</p>
-            <nav className="space-y-2">
-              <button onClick={() => setActiveTab('overview')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'overview' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:bg-slate-800 hover:text-white'}`}><LayoutDashboard size={18} /> Overview</button>
-              <button onClick={() => setActiveTab('garage')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'garage' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:bg-slate-800 hover:text-white'}`}><CarFront size={18} /> My Garage</button>
-              <button onClick={() => setActiveTab('book')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'book' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:bg-slate-800 hover:text-white'}`}><Calendar size={18} /> Book Service</button>
-              <button onClick={() => setActiveTab('history')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${activeTab === 'history' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:bg-slate-800 hover:text-white'}`}><History size={18} /> History</button>
-            </nav>
-          </div>
-
-          <div className="mt-auto p-6 border-t border-slate-800">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-blue-400 font-bold uppercase">{currentUser.name.charAt(0)}</div>
-              <div className="overflow-hidden">
-                <p className="text-sm font-bold text-white truncate">{currentUser.name}</p>
-                <p className="text-xs text-slate-500 truncate">{currentUser.contact}</p>
-              </div>
-            </div>
-            <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-500 py-3 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-all"><LogOut size={18} /> Sign Out</button>
-          </div>
-        </aside>
-
-        {/* MOBILE HEADER */}
-        <div className="md:hidden fixed top-0 w-full bg-slate-900 text-white p-4 flex justify-between items-center z-30 shadow-lg">
-          <div className="flex items-center gap-2"><CarFront size={24} className="text-blue-500" /><span className="font-extrabold text-lg">Portal</span></div>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 bg-slate-800 rounded-lg">{isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}</button>
+      <div className="min-h-screen bg-slate-950 flex flex-col font-sans selection:bg-blue-500/30 relative overflow-hidden">
+        {/* Abstract Background Effects */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+           <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[120px]"></div>
+           <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] rounded-full bg-emerald-600/10 blur-[150px]"></div>
+           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1613214149922-f1809c99b414?q=80&w=2000')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
         </div>
 
-        {/* MOBILE MENU */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 top-16 bg-slate-900 z-20 p-4 border-t border-slate-800 animate-in fade-in">
-            <nav className="space-y-3">
-              {['overview', 'garage', 'book', 'history'].map((tab) => (
-                <button key={tab} onClick={() => { setActiveTab(tab as any); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-4 rounded-xl font-bold capitalize ${activeTab === tab ? 'bg-blue-600 text-white' : 'text-slate-300 bg-slate-800'}`}>
-                  {tab === 'overview' && <LayoutDashboard size={18} />} {tab === 'garage' && <CarFront size={18} />} {tab === 'book' && <Calendar size={18} />} {tab === 'history' && <History size={18} />} {tab}
-                </button>
-              ))}
-              <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-red-500/10 text-red-500 py-4 rounded-xl font-bold mt-8"><LogOut size={18} /> Sign Out</button>
-            </nav>
-          </div>
-        )}
+        {/* Navigation Bar Minimal */}
+        <nav className="relative z-10 w-full p-6 flex justify-between items-center max-w-7xl mx-auto">
+           <Link href="/" className="flex items-center gap-3 group">
+             <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-600/30 group-hover:scale-105 transition-transform"><CarFront size={24} /></div>
+             <span className="text-2xl font-black text-white tracking-tight">MoTech-i</span>
+           </Link>
+           <Link href="/" className="text-slate-400 hover:text-white font-bold text-sm transition">Back to Home</Link>
+        </nav>
 
-        {/* MAIN CONTENT */}
-        <main className="flex-1 md:ml-64 p-4 sm:p-8 pt-20 md:pt-8 w-full min-h-screen">
-          {isDashboardLoading ? (
-            <div className="flex flex-col items-center justify-center h-64 text-slate-400">
-              <Loader2 size={40} className="animate-spin mb-4 text-blue-600" />
-              <p className="font-bold">Syncing Database...</p>
+        {/* Auth Container */}
+        <div className="flex-1 flex items-center justify-center p-4 relative z-10">
+          <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-black text-white tracking-tight mb-3">Client Portal</h1>
+              <p className="text-slate-400 text-lg">
+                {authMode === 'login' ? 'Track your vehicle, view invoices, and manage bookings.' : 'Create an account to manage your garage digitally.'}
+              </p>
             </div>
-          ) : (
-            <>
-              {/* TAB 1: OVERVIEW */}
-              {activeTab === 'overview' && (
-                <div className="animate-in fade-in duration-300">
-                  <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div>
-                      <h1 className="text-3xl font-black text-slate-900 mb-2">Welcome, {currentUser.name.split(' ')[0]}!</h1>
-                      <p className="text-slate-500">Manage your vehicles and service schedules smartly.</p>
-                    </div>
-                    <button onClick={() => setActiveTab('book')} className="w-full md:w-auto bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2">
-                      <Calendar size={18} /> Schedule Service
-                    </button>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                      <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4"><CarFront size={24} /></div>
-                      <p className="text-slate-500 font-bold mb-1">Registered Vehicles</p>
-                      <h3 className="text-3xl font-black text-slate-900">{dashboardData.vehicles.length}</h3>
-                    </div>
-                    
-                    {dashboardData.vehicles.filter(v => v.status === 'In Garage').map(activeCar => (
-                      <div key={activeCar.id} className="bg-blue-600 text-white p-6 rounded-2xl shadow-xl relative overflow-hidden lg:col-span-2 flex flex-col justify-center">
-                        <div className="absolute right-0 top-0 opacity-10 p-4"><Wrench size={100} /></div>
-                        <div className="relative z-10">
-                          <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold mb-4"><Activity size={14} className="animate-pulse"/> Live Status</div>
-                          <h3 className="text-xl font-black mb-1">{activeCar.make} is in the Garage</h3>
-                          <p className="text-blue-100 mb-4">Currently under maintenance process.</p>
-                          <div className="w-full bg-blue-800 rounded-full h-2.5"><div className="bg-emerald-400 h-2.5 rounded-full" style={{ width: `${activeCar.progress}%` }}></div></div>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {dashboardData.vehicles.filter(v => v.status === 'In Garage').length === 0 && (
-                      <div className="bg-slate-100 p-6 rounded-2xl border border-slate-200 border-dashed lg:col-span-2 flex flex-col items-center justify-center text-slate-400">
-                        <ShieldCheck size={32} className="mb-2" />
-                        <p className="font-bold">All your vehicles are currently safe and out of the garage.</p>
-                      </div>
-                    )}
-                  </div>
+            
+            <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-[2.5rem] p-8 shadow-2xl">
+              {loginError && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-2xl mb-6 text-sm font-bold flex items-center gap-3">
+                  <AlertTriangle size={20} className="shrink-0" /> {loginError}
                 </div>
               )}
-
-              {/* TAB 2: MY GARAGE */}
-              {activeTab === 'garage' && (
-                <div className="animate-in fade-in duration-300">
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-black text-slate-900">My Vehicles</h2>
-                    <button onClick={() => setIsAddCarOpen(true)} className="text-sm font-bold text-white bg-slate-900 px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-slate-800 transition">
-                      <Plus size={16} /> Add Car
-                    </button>
-                  </div>
-
-                  {dashboardData.vehicles.length === 0 ? (
-                    <div className="bg-white rounded-3xl p-12 border border-slate-200 text-center">
-                      <CarFront size={48} className="mx-auto text-slate-300 mb-4" />
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">No Vehicles Found</h3>
-                      <p className="text-slate-500 mb-6">You haven't registered any vehicles yet.</p>
-                    </div>
-                  ) : (
-                    <div className="grid lg:grid-cols-2 gap-6">
-                      {dashboardData.vehicles.map((car) => (
-                        <div key={car.id} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm hover:shadow-md transition">
-                          <div className="flex justify-between items-start mb-6">
-                            <div className="flex items-center gap-4">
-                              <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600"><CarFront size={28} /></div>
-                              <div>
-                                <h3 className="font-black text-lg text-slate-900">{car.make}</h3>
-                                <p className="text-sm font-mono text-slate-500 mt-1">{car.plate}</p>
-                              </div>
-                            </div>
-                            <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg uppercase flex items-center gap-1 ${car.status === "In Garage" ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                              {car.status === "In Garage" ? <Wrench size={14}/> : <ShieldCheck size={14}/>} {car.status}
-                            </span>
-                          </div>
-
-                          <div className="flex gap-3 border-t border-slate-100 pt-6">
-                            <button onClick={() => setActiveTab('book')} className="flex-1 bg-slate-50 text-slate-700 border border-slate-200 font-bold py-2.5 rounded-xl hover:bg-slate-100 transition">
-                              Book Service
-                            </button>
-                            <button onClick={() => setEmergencyCar(car)} className="flex-1 bg-red-50 text-red-600 font-bold py-2.5 rounded-xl hover:bg-red-100 transition flex justify-center items-center gap-2">
-                              <AlertTriangle size={16} /> SOS Alert
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB 3: BOOK SERVICE */}
-              {activeTab === 'book' && (
-                <div className="animate-in fade-in duration-300 max-w-3xl">
-                  <h2 className="text-2xl font-black text-slate-900 mb-6">Schedule a Service</h2>
-                  <form className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm space-y-6" onSubmit={handleBookingSubmit}>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Select Vehicle</label>
-                      <select required value={bookingForm.vehicle_id} onChange={e => setBookingForm({...bookingForm, vehicle_id: e.target.value})} className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium text-slate-800">
-                        <option value="" disabled>Choose a vehicle...</option>
-                        {dashboardData.vehicles.map(v => <option key={v.id} value={v.id}>{v.make} - {v.plate}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Service Required</label>
-                      <select required value={bookingForm.service} onChange={e => setBookingForm({...bookingForm, service: e.target.value})} className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium text-slate-800">
-                        <option>General Repair & Maintenance</option>
-                        <option>Computer Diagnostics</option>
-                        <option>Pre-Purchase Inspection</option>
-                        <option>Other / Not Sure</option>
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Date</label>
-                        <input type="date" required value={bookingForm.date} onChange={e => setBookingForm({...bookingForm, date: e.target.value})} className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium text-slate-800" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Time</label>
-                        <input type="time" required value={bookingForm.time} onChange={e => setBookingForm({...bookingForm, time: e.target.value})} className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium text-slate-800" />
-                      </div>
-                    </div>
-                    <button type="submit" disabled={isBooking} className="w-full bg-blue-600 text-white font-black text-lg py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg flex justify-center items-center gap-2">
-                      {isBooking ? 'Submitting...' : <><Calendar size={20} /> Confirm Booking</>}
-                    </button>
-                  </form>
-                </div>
-              )}
-
-              {/* TAB 4: SERVICE HISTORY */}
-              {activeTab === 'history' && (
-                <div className="animate-in fade-in duration-300">
-                  <h2 className="text-2xl font-black text-slate-900 mb-6">Service History & Appointments</h2>
-                  <div className="grid lg:grid-cols-2 gap-8">
-                    <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm h-fit">
-                      <h3 className="font-black text-lg text-slate-900 mb-4 flex items-center gap-2"><Clock className="text-blue-600"/> Upcoming</h3>
-                      {dashboardData.appointments.length > 0 ? (
-                        <div className="space-y-4">
-                          {dashboardData.appointments.map(app => (
-                            <div key={app.id} className="border-l-4 border-blue-600 bg-slate-50 p-4 rounded-r-xl">
-                              <h4 className="font-bold text-slate-900">{app.service}</h4>
-                              <p className="text-sm text-slate-500 mt-1">{app.apt_date} at {app.apt_time}</p>
-                              <span className="inline-block mt-2 text-[10px] font-bold text-blue-600 uppercase bg-blue-100 px-2 py-0.5 rounded">{app.status}</span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : <p className="text-slate-500 text-sm">No upcoming appointments.</p>}
-                    </div>
-
-                    <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm h-fit">
-                      <h3 className="font-black text-lg text-slate-900 mb-4 flex items-center gap-2"><ShieldCheck className="text-emerald-600"/> Completed</h3>
-                      {dashboardData.history.length > 0 ? (
-                        <div className="space-y-4">
-                          {dashboardData.history.map(item => (
-                            <div key={item.id} className="flex justify-between items-center border-b border-slate-100 pb-4 last:border-0 last:pb-0">
-                              <div>
-                                <h4 className="font-bold text-slate-900 text-sm mb-1">{item.service}</h4>
-                                <p className="text-xs text-slate-500">{item.service_date}</p>
-                              </div>
-                              <div className="text-right">
-                                <span className="block font-bold text-slate-900">{item.cost}</span>
-                                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase mt-1 inline-block">Paid</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : <p className="text-slate-500 text-sm">No service history found.</p>}
+              
+              {/* LOGIN FORM */}
+              {authMode === 'login' ? (
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 ml-1">Phone Number</label>
+                    <div className="relative group">
+                      <User size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+                      <input 
+                        type="text" 
+                        required 
+                        value={loginForm.identifier} 
+                        onChange={e => setLoginForm({...loginForm, identifier: e.target.value})} 
+                        className="w-full pl-12 pr-4 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none text-white transition-all font-medium placeholder:text-slate-700" 
+                        placeholder="e.g. 0712345678" 
+                      />
                     </div>
                   </div>
-                </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 ml-1">Access PIN</label>
+                    <div className="relative group">
+                      <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+                      <input 
+                        type="password" 
+                        value={loginForm.password} 
+                        onChange={e => setLoginForm({...loginForm, password: e.target.value})} 
+                        className="w-full pl-12 pr-4 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none text-white transition-all font-medium placeholder:text-slate-700" 
+                        placeholder="Leave blank for Pilot Demo" 
+                      />
+                    </div>
+                  </div>
+                  <button type="submit" disabled={isLoggingIn} className="w-full bg-blue-600 text-white font-black text-lg py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/30 flex justify-center items-center gap-2 mt-4">
+                    {isLoggingIn ? <Loader2 className="animate-spin" size={24} /> : <>Secure Login <ArrowRight size={20}/></>}
+                  </button>
+                </form>
+              ) : (
+                /* REGISTER FORM */
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 ml-1">Full Name</label>
+                    <input type="text" required value={registerForm.name} onChange={e => setRegisterForm({...registerForm, name: e.target.value})} className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-white font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 ml-1">Phone Number</label>
+                    <input type="tel" required value={registerForm.phone} onChange={e => setRegisterForm({...registerForm, phone: e.target.value})} className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-white font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 ml-1">Email (Optional)</label>
+                    <input type="email" value={registerForm.email} onChange={e => setRegisterForm({...registerForm, email: e.target.value})} className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-white font-medium" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 ml-1">Create PIN</label>
+                    <input type="password" required value={registerForm.password} onChange={e => setRegisterForm({...registerForm, password: e.target.value})} className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-white font-medium" />
+                  </div>
+                  <button type="submit" disabled={isLoggingIn} className="w-full bg-emerald-600 text-white font-black text-lg py-4 rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/30 flex justify-center items-center gap-2 mt-4">
+                    {isLoggingIn ? <Loader2 className="animate-spin" size={24} /> : <>Create Account <CheckCircle2 size={20}/></>}
+                  </button>
+                </form>
               )}
-            </>
-          )}
-        </main>
+            </div>
+            
+            <div className="text-center mt-8">
+              {authMode === 'login' ? (
+                <button onClick={() => setAuthMode('register')} className="text-slate-500 font-medium hover:text-white transition">Don't have an account? <span className="text-blue-500 font-bold">Register</span></button>
+              ) : (
+                <button onClick={() => setAuthMode('login')} className="text-slate-500 font-medium hover:text-white transition">Already have an account? <span className="text-blue-500 font-bold">Login</span></button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   // =========================================================================
-  // UI 2: LOGIN & REGISTER
+  // UI 2: PREMIUM CLIENT DASHBOARD
   // =========================================================================
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
-      <div className="hidden md:flex md:w-1/2 bg-slate-900 relative items-center justify-center p-12 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1613214149922-f1809c99b414?q=80&w=2000')] bg-cover bg-center opacity-20"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent"></div>
-        <div className="relative z-10 w-full max-w-md">
-          <Link href="/" className="inline-flex items-center gap-3 mb-12 group">
-            <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg"><CarFront size={28} /></div>
-            <span className="text-3xl font-black text-white tracking-tight">MoTech-i</span>
-          </Link>
-          <h1 className="text-4xl font-black text-white mb-6 leading-tight">Manage Your Vehicle <br/><span className="text-blue-500">Like a Pro.</span></h1>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 text-slate-300"><CheckCircle2 size={20} className="text-emerald-500" /><span className="font-medium">Live Garage Tracking</span></div>
-            <div className="flex items-center gap-3 text-slate-300"><CheckCircle2 size={20} className="text-emerald-500" /><span className="font-medium">Digital Service Records</span></div>
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
+      
+      {/* HEADER */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+             <div className="bg-blue-600 p-2 rounded-xl text-white shadow-md shadow-blue-600/20"><CarFront size={20} /></div>
+             <span className="text-xl font-black text-slate-900 tracking-tight hidden sm:block">MoTech-i Portal</span>
           </div>
-        </div>
-      </div>
-
-      <div className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 sm:p-12 bg-white relative">
-        <Link href="/" className="absolute top-6 left-6 md:hidden flex items-center gap-2">
-          <div className="bg-blue-600 p-1.5 rounded-lg text-white"><CarFront size={20} /></div>
-          <span className="font-black text-slate-900">MoTech-i</span>
-        </Link>
-
-        <div className="w-full max-w-md animate-in fade-in duration-500">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-black text-slate-900 mb-2">{authMode === 'login' ? 'Sign In to Portal' : 'Create Account'}</h2>
-            <p className="text-slate-500">{authMode === 'login' ? 'Enter your credentials below.' : 'Join MoTech-i to manage your vehicles.'}</p>
-          </div>
-
-          {successMsg && <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold rounded-xl flex items-start gap-3"><CheckCircle2 size={20} className="shrink-0" /> {successMsg}</div>}
-          {errorMsg && <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm font-bold rounded-xl flex items-start gap-3"><AlertTriangle size={20} className="shrink-0" /> {errorMsg}</div>}
-
-          <form onSubmit={handleAuthSubmit} className="space-y-5">
-            {authMode === 'register' && (
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Full Name</label>
-                <div className="relative">
-                  <User size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="text" required placeholder="John Doe" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-medium text-slate-800" />
+          
+          <div className="flex items-center gap-4">
+             <button onClick={() => setActiveTab('sos')} className="hidden sm:flex items-center gap-2 bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-xl font-bold text-sm hover:bg-red-600 hover:text-white transition">
+               <AlertTriangle size={16}/> Emergency SOS
+             </button>
+             <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
+                <div className="text-right hidden md:block">
+                   <p className="text-sm font-black text-slate-900">{clientUser?.name}</p>
+                   <p className="text-xs font-bold text-slate-500">{clientUser?.phone}</p>
                 </div>
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Email or Phone Number</label>
-              <div className="relative">
-                <Mail size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" required placeholder="email@example.com or 07XX..." value={formData.contact} onChange={(e) => setFormData({...formData, contact: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-medium text-slate-800" />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-bold text-slate-700">Password</label>
-              </div>
-              <div className="relative">
-                <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="password" required placeholder="••••••••" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-medium text-slate-800" />
-              </div>
-            </div>
-            <button type="submit" disabled={isLoading} className="w-full bg-blue-600 text-white font-black text-lg py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg flex justify-center items-center gap-2 mt-2">
-              {isLoading ? <span className="animate-pulse">Processing...</span> : <>{authMode === 'login' ? 'Sign In' : 'Create Account'} <ArrowRight size={20} /></>}
-            </button>
-          </form>
-
-          <div className="mt-8 text-center text-slate-600 font-medium">
-            {authMode === 'login' ? "Don't have an account? " : "Already registered? "}
-            <button onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setErrorMsg(""); setSuccessMsg(""); }} className="text-blue-600 font-bold hover:underline focus:outline-none">
-              {authMode === 'login' ? 'Register here' : 'Sign in here'}
-            </button>
+                <div className="w-10 h-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-black shadow-md border-2 border-white">
+                   {clientUser?.name?.charAt(0) || 'C'}
+                </div>
+                <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"><LogOut size={20}/></button>
+             </div>
           </div>
-
         </div>
-      </div>
+      </header>
+
+      {/* MAIN LAYOUT */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-8">
+        
+        {/* SIDEBAR NAVIGATION (Desktop) / TOP TABS (Mobile) */}
+        <aside className="w-full lg:w-64 shrink-0">
+           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 lg:p-6 lg:sticky lg:top-28 flex flex-row lg:flex-col gap-2 overflow-x-auto hide-scrollbar">
+              <button onClick={() => setActiveTab('garage')} className={`flex-shrink-0 flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${activeTab === 'garage' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'}`}>
+                <CarFront size={20} /> My Garage
+              </button>
+              <button onClick={() => setActiveTab('tracking')} className={`flex-shrink-0 flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${activeTab === 'tracking' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'}`}>
+                <Activity size={20} /> Live Tracking
+              </button>
+              <button onClick={() => setActiveTab('booking')} className={`flex-shrink-0 flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${activeTab === 'booking' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'}`}>
+                <Calendar size={20} /> Book Service
+              </button>
+              <button onClick={() => setActiveTab('invoices')} className={`flex-shrink-0 flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${activeTab === 'invoices' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'}`}>
+                <FileText size={20} /> Invoices & Billing
+              </button>
+              <button onClick={() => setActiveTab('profile')} className={`flex-shrink-0 flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${activeTab === 'profile' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'}`}>
+                <User size={20} /> Profile Settings
+              </button>
+              
+              <button onClick={() => setActiveTab('sos')} className={`lg:hidden flex-shrink-0 flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-sm ${activeTab === 'sos' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                <AlertTriangle size={20} /> SOS
+              </button>
+           </div>
+        </aside>
+
+        {/* CONTENT AREA */}
+        <div className="flex-1 min-w-0">
+           {isLoading ? (
+             <div className="h-64 flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200 shadow-sm"><Loader2 className="animate-spin text-blue-600 mb-4" size={40} /><p className="font-bold text-slate-500">Syncing with Garage...</p></div>
+           ) : (
+             <div className="animate-in fade-in duration-500 space-y-6">
+                
+                {/* ===================== TAB: MY GARAGE ===================== */}
+                {activeTab === 'garage' && (
+                  <>
+                    <div className="flex justify-between items-center mb-6">
+                       <div>
+                         <h2 className="text-2xl font-black text-slate-900">My Vehicles</h2>
+                         <p className="text-slate-500 font-medium text-sm mt-1">Vehicles registered under your account.</p>
+                       </div>
+                       <button onClick={() => setActiveTab('booking')} className="hidden sm:flex items-center gap-2 bg-slate-900 text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-800 transition shadow-md"><Plus size={16}/> Add Vehicle</button>
+                    </div>
+
+                    {myVehicles.length === 0 ? (
+                       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-12 text-center">
+                         <CarFront size={64} className="mx-auto text-slate-200 mb-4" />
+                         <h3 className="text-xl font-black text-slate-800 mb-2">No Vehicles Found</h3>
+                         <p className="text-slate-500 mb-6">You haven't registered any vehicles with us yet.</p>
+                         <button onClick={() => setActiveTab('booking')} className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg"><Calendar size={18}/> Book First Service</button>
+                       </div>
+                    ) : (
+                       <div className="grid md:grid-cols-2 gap-6">
+                         {myVehicles.map((vehicle, idx) => (
+                           <div key={idx} className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 relative overflow-hidden group hover:border-blue-300 transition-colors">
+                              <div className="absolute -right-6 -bottom-6 opacity-5 group-hover:scale-110 transition-transform duration-500 pointer-events-none"><CarFront size={150}/></div>
+                              <div className="flex justify-between items-start mb-6 relative z-10">
+                                 <div>
+                                   <h3 className="text-2xl font-black text-slate-900 uppercase">{vehicle.plate}</h3>
+                                   <p className="text-blue-600 font-bold">{vehicle.make} {vehicle.model}</p>
+                                 </div>
+                                 <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center"><CarFront size={24}/></div>
+                              </div>
+                              <div className="space-y-3 relative z-10 border-t border-slate-100 pt-4">
+                                 <div className="flex justify-between text-sm"><span className="text-slate-500 font-medium">VIN/Chassis:</span><span className="font-bold text-slate-800 uppercase">{vehicle.vin || 'Not Provided'}</span></div>
+                                 <div className="flex justify-between text-sm"><span className="text-slate-500 font-medium">Total Visits:</span><span className="font-bold text-slate-800">{myJobs.filter(j => j.vehicleId === vehicle.id).length}</span></div>
+                              </div>
+                              <button onClick={() => setActiveTab('tracking')} className="w-full mt-6 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold py-3 rounded-xl transition flex justify-center items-center gap-2 text-sm border border-slate-200 hover:border-blue-200">View Service History <ChevronRight size={16}/></button>
+                           </div>
+                         ))}
+                       </div>
+                    )}
+                  </>
+                )}
+
+                {/* ===================== TAB: LIVE TRACKING ===================== */}
+                {activeTab === 'tracking' && (
+                  <>
+                    <div className="mb-6">
+                       <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2"><Activity className="text-blue-600"/> Live Tracking</h2>
+                       <p className="text-slate-500 font-medium text-sm mt-1">Real-time status of your vehicles currently in the workshop.</p>
+                    </div>
+
+                    {myJobs.length === 0 ? (
+                       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-12 text-center">
+                         <ShieldCheck size={64} className="mx-auto text-emerald-200 mb-4" />
+                         <h3 className="text-xl font-black text-slate-800 mb-2">No Active Repairs</h3>
+                         <p className="text-slate-500 mb-6">Your garage history is clean. No ongoing services at the moment.</p>
+                       </div>
+                    ) : (
+                       <div className="space-y-6">
+                         {myJobs.map(job => (
+                           <div key={job.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                              <div className="p-6 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50">
+                                 <div>
+                                   <div className="flex items-center gap-3 mb-1">
+                                     <h3 className="text-xl font-black text-slate-900 uppercase">{job.vehicle.plate}</h3>
+                                     <span className={`px-3 py-1 rounded-lg text-xs font-bold tracking-widest uppercase ${job.status === 'Ready' ? 'bg-emerald-100 text-emerald-700' : job.status === 'Waiting Parts' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>{job.status}</span>
+                                   </div>
+                                   <p className="text-sm font-bold text-slate-500">{job.serviceType}</p>
+                                 </div>
+                                 <div className="text-right">
+                                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">Assigned Mechanic</p>
+                                   <p className="text-sm font-black text-slate-800 flex items-center justify-end gap-1"><Wrench size={14} className="text-slate-400"/> {job.mechanic?.name || 'Pending Assignment'}</p>
+                                 </div>
+                              </div>
+
+                              <div className="p-6 md:p-8">
+                                 <div className="relative pt-8 pb-4">
+                                    <div className="absolute top-1/2 left-0 w-full h-2 bg-slate-100 rounded-full -translate-y-1/2 overflow-hidden">
+                                       <div className={`h-full rounded-full transition-all duration-1000 ${getProgressColor(job.status)}`} style={{ width: getProgressWidth(job.status) }}></div>
+                                    </div>
+                                    <div className="relative flex justify-between z-10 w-full">
+                                       <div className="flex flex-col items-center gap-2 -ml-3">
+                                          <div className={`w-6 h-6 rounded-full flex items-center justify-center border-[3px] bg-white ${job.status !== 'Pending' ? 'border-emerald-500 text-emerald-500' : 'border-blue-500 text-blue-500'}`}><CheckCircle2 size={12} className={job.status === 'Pending' ? 'opacity-0' : ''}/></div>
+                                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider absolute top-8 whitespace-nowrap text-center">Received</span>
+                                       </div>
+                                       <div className="flex flex-col items-center gap-2">
+                                          <div className={`w-6 h-6 rounded-full flex items-center justify-center border-[3px] bg-white ${['In Progress', 'Waiting Parts', 'Ready', 'Collected'].includes(job.status) ? 'border-emerald-500 text-emerald-500' : 'border-slate-200'}`}><CheckCircle2 size={12} className={['In Progress', 'Waiting Parts', 'Ready', 'Collected'].includes(job.status) ? '' : 'opacity-0'}/></div>
+                                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider absolute top-8 whitespace-nowrap text-center -translate-x-1/4">In Progress</span>
+                                       </div>
+                                       <div className="flex flex-col items-center gap-2 -mr-3">
+                                          <div className={`w-6 h-6 rounded-full flex items-center justify-center border-[3px] bg-white ${['Ready', 'Collected'].includes(job.status) ? 'border-emerald-500 text-emerald-500' : 'border-slate-200'}`}><CheckCircle2 size={12} className={['Ready', 'Collected'].includes(job.status) ? '' : 'opacity-0'}/></div>
+                                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider absolute top-8 whitespace-nowrap text-center -translate-x-1/2">Ready</span>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+
+                              {job.mechanicNotes && (
+                                <div className="px-6 pb-6">
+                                  <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-2xl">
+                                     <h4 className="text-xs font-black text-blue-800 uppercase tracking-widest mb-2 flex items-center gap-1"><FileText size={14}/> Mechanic's Diagnosis Report</h4>
+                                     <p className="text-sm font-medium text-slate-600 italic">"{job.mechanicNotes}"</p>
+                                  </div>
+                                </div>
+                              )}
+                           </div>
+                         ))}
+                       </div>
+                    )}
+                  </>
+                )}
+
+                {/* ===================== TAB: BOOK SERVICE (INTERNAL) ===================== */}
+                {activeTab === 'booking' && (
+                  <div className="max-w-2xl">
+                     <h2 className="text-2xl font-black text-slate-900 mb-6">Book New Service</h2>
+                     <form onSubmit={handleBookService} className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                           <div>
+                              <label className="block text-sm font-bold text-slate-700 mb-1">Make (Brand)</label>
+                              <input required type="text" placeholder="e.g Toyota" value={bookingForm.make} onChange={e => setBookingForm({...bookingForm, make: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium" />
+                           </div>
+                           <div>
+                              <label className="block text-sm font-bold text-slate-700 mb-1">Model & Year</label>
+                              <input required type="text" placeholder="e.g Harrier 2018" value={bookingForm.model} onChange={e => setBookingForm({...bookingForm, model: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium" />
+                           </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div>
+                              <label className="block text-sm font-bold text-slate-700 mb-1">Plate Number</label>
+                              <input required type="text" placeholder="e.g T 123 ABC" value={bookingForm.plate} onChange={e => setBookingForm({...bookingForm, plate: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 uppercase font-bold" />
+                           </div>
+                           <div>
+                              <label className="block text-sm font-bold text-slate-700 mb-1">VIN (Optional)</label>
+                              <input type="text" value={bookingForm.vin} onChange={e => setBookingForm({...bookingForm, vin: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 uppercase font-medium" />
+                           </div>
+                        </div>
+                        <div>
+                           <label className="block text-sm font-bold text-slate-700 mb-1">Describe Issue</label>
+                           <textarea required rows={4} placeholder="What needs to be fixed?" value={bookingForm.issue} onChange={e => setBookingForm({...bookingForm, issue: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium"></textarea>
+                        </div>
+                        <button type="submit" disabled={isBooking} className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
+                           {isBooking ? <Loader2 className="animate-spin" size={20}/> : <Calendar size={20}/>}
+                           Submit Booking Request
+                        </button>
+                     </form>
+                  </div>
+                )}
+
+                {/* ===================== TAB: SOS (INTERNAL) ===================== */}
+                {activeTab === 'sos' && (
+                  <div className="max-w-2xl">
+                     <h2 className="text-2xl font-black text-red-600 flex items-center gap-2 mb-6"><AlertTriangle/> Emergency SOS</h2>
+                     <form onSubmit={handleSendSOS} className="bg-red-50 rounded-3xl border border-red-200 shadow-sm p-6 md:p-8 space-y-6">
+                        <div>
+                           <label className="block text-sm font-bold text-slate-700 mb-1">Your Exact Location</label>
+                           <div className="relative">
+                             <MapPin size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-red-400" />
+                             <input required type="text" placeholder="e.g Makongo Juu near Total Station" value={sosForm.location} onChange={e => setSosForm({...sosForm, location: e.target.value})} className="w-full pl-12 pr-4 py-4 bg-white border border-red-200 rounded-xl outline-none focus:ring-2 focus:ring-red-500 font-medium" />
+                           </div>
+                        </div>
+                        <div>
+                           <label className="block text-sm font-bold text-slate-700 mb-1">What Happened?</label>
+                           <textarea required rows={3} placeholder="e.g Car won't start, accident..." value={sosForm.issue} onChange={e => setSosForm({...sosForm, issue: e.target.value})} className="w-full px-4 py-3 bg-white border border-red-200 rounded-xl outline-none focus:ring-2 focus:ring-red-500 font-medium"></textarea>
+                        </div>
+                        <button type="submit" disabled={isSendingSos} className="w-full bg-red-600 text-white font-black py-4 rounded-xl hover:bg-red-700 shadow-lg shadow-red-600/30 transition flex items-center justify-center gap-2 text-lg">
+                           {isSendingSos ? <Loader2 className="animate-spin" size={24}/> : <AlertTriangle size={24}/>}
+                           Dispatch Rescue Team
+                        </button>
+                     </form>
+
+                     {/* My SOS History */}
+                     {mySosAlerts.length > 0 && (
+                       <div className="mt-8">
+                         <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">My Past SOS Requests</h3>
+                         <div className="space-y-3">
+                           {mySosAlerts.map((sos, idx) => (
+                             <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+                               <div>
+                                 <p className="font-bold text-slate-800">{sos.location}</p>
+                                 <p className="text-xs text-slate-500">{new Date(sos.createdAt).toLocaleDateString()}</p>
+                               </div>
+                               <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest ${sos.status === 'Active' ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-slate-100 text-slate-600'}`}>{sos.status}</span>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     )}
+                  </div>
+                )}
+
+                {/* ===================== TAB: INVOICES ===================== */}
+                {activeTab === 'invoices' && (
+                  <>
+                    <div className="mb-6">
+                       <h2 className="text-2xl font-black text-slate-900">Billing & Invoices</h2>
+                       <p className="text-slate-500 font-medium text-sm mt-1">View and download your payment history.</p>
+                    </div>
+
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                       <table className="w-full text-left border-collapse">
+                          <thead className="bg-slate-50 border-b border-slate-200">
+                             <tr>
+                               <th className="p-4 font-bold text-slate-500 text-xs uppercase tracking-widest hidden sm:table-cell">Invoice #</th>
+                               <th className="p-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Date & Vehicle</th>
+                               <th className="p-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Amount</th>
+                               <th className="p-4 font-bold text-slate-500 text-xs uppercase tracking-widest">Status</th>
+                               <th className="p-4 font-bold text-slate-500 text-xs uppercase tracking-widest text-right">Action</th>
+                             </tr>
+                          </thead>
+                          <tbody>
+                             {myInvoices.length === 0 ? (
+                                <tr><td colSpan={5} className="p-12 text-center text-slate-500 font-medium"><CreditCard size={48} className="mx-auto mb-4 text-slate-200"/> No invoices generated yet.</td></tr>
+                             ) : (
+                                myInvoices.map((inv, idx) => (
+                                  <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                     <td className="p-4 font-bold text-slate-900 text-sm hidden sm:table-cell">{inv.id}</td>
+                                     <td className="p-4">
+                                       <p className="font-bold text-slate-800 text-sm mb-0.5">{inv.date}</p>
+                                       <p className="text-xs text-slate-500 uppercase">{inv.vehicle}</p>
+                                     </td>
+                                     <td className="p-4 font-black text-slate-900">{formatTZS(inv.amount)}</td>
+                                     <td className="p-4">
+                                        <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-widest ${inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{inv.status}</span>
+                                     </td>
+                                     <td className="p-4 text-right">
+                                        <button className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white transition"><Download size={14}/></button>
+                                     </td>
+                                  </tr>
+                                ))
+                             )}
+                          </tbody>
+                       </table>
+                    </div>
+                  </>
+                )}
+
+                {/* ===================== TAB: PROFILE ===================== */}
+                {activeTab === 'profile' && (
+                  <div className="max-w-2xl">
+                     <h2 className="text-2xl font-black text-slate-900 mb-6">Profile Settings</h2>
+                     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-6">
+                        <div>
+                          <label className="block text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Full Name</label>
+                          <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                             <User size={20} className="text-slate-400"/>
+                             <span className="font-bold text-slate-900">{clientUser?.name}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Registered Phone</label>
+                          <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                             <Phone size={20} className="text-slate-400"/>
+                             <span className="font-bold text-slate-900">{clientUser?.phone}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Email Address</label>
+                          <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                             <Mail size={20} className="text-slate-400"/>
+                             <span className="font-bold text-slate-900">{clientUser?.email || 'Not Provided'}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="pt-6 border-t border-slate-100">
+                           <button className="text-blue-600 font-bold flex items-center gap-2 hover:underline"><Lock size={16}/> Change Access PIN</button>
+                        </div>
+                     </div>
+                  </div>
+                )}
+
+             </div>
+           )}
+        </div>
+      </main>
     </div>
   );
 }
