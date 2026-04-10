@@ -8,40 +8,39 @@ const prisma = new PrismaClient();
 // FUNCTION YA KUTUMA SMS (Automated)
 // ==========================================
 async function sendSMS(phone: string, message: string) {
-  // Hapa utaweka API Keys zako utakapojisajili na mtandao wa SMS (mfn: Beem Africa)
+  // Hapa utaweka API Keys zako utakapojisajili na mtandao wa SMS
   const API_KEY = process.env.SMS_API_KEY || 'WEKA_API_KEY_YAKO_HAPA';
   const SECRET_KEY = process.env.SMS_SECRET_KEY || 'WEKA_SECRET_KEY_YAKO_HAPA';
 
-  // Format namba ianze na 255 badala ya 0 (Standard ya API nyingi za TZ)
+  // Format namba ianze na 255 badala ya 0
   let formattedPhone = phone;
   if (formattedPhone.startsWith('0')) {
     formattedPhone = '255' + formattedPhone.substring(1);
   }
 
-  // SIMULATION: Wakati una-test, hii itaonekana kwenye Terminal yako ya VS Code
+  // SIMULATION: Wakati una-test, hii itaonekana kwenye Terminal yako
   console.log(`\n💬 [SYSTEM AUTOMATION] SMS Inatumwa kwenda: ${formattedPhone}`);
   console.log(`📝 [MESSAGE]: "${message}"\n`);
 
-  /* // KODI HALISI YA KUTUMA SMS (Ukipata API Keys, futa hizi alama za comment '/*' na '*/')
-  try {
-    await fetch('https://apisms.beem.africa/v1/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + Buffer.from(API_KEY + ':' + SECRET_KEY).toString('base64')
-      },
-      body: JSON.stringify({
-        source_addr: 'MOTECH-I',
-        schedule_time: '',
-        encoding: 0,
-        message: message,
-        recipients: [{ recipient_id: 1, dest_addr: formattedPhone }]
-      })
-    });
-  } catch(err) {
-    console.error("SMS Failed to send:", err);
-  }
-  */
+  // KODI HALISI YA KUTUMA SMS (Ukipata API Keys, ondoa '//' kwenye mistari inayofuata)
+  // try {
+  //   await fetch('https://apisms.beem.africa/v1/send', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'Authorization': 'Basic ' + Buffer.from(API_KEY + ':' + SECRET_KEY).toString('base64')
+  //     },
+  //     body: JSON.stringify({
+  //       source_addr: 'MOTECH-I',
+  //       schedule_time: '',
+  //       encoding: 0,
+  //       message: message,
+  //       recipients: [{ recipient_id: 1, dest_addr: formattedPhone }]
+  //     })
+  //   });
+  // } catch(err) {
+  //   console.error("SMS Failed to send:", err);
+  // }
 }
 
 export async function PATCH(request: Request) {
@@ -81,7 +80,7 @@ export async function PATCH(request: Request) {
       include: { 
         mechanic: true,
         vehicle: {
-          include: { client: true } // Tunavuta namba ya simu ya mteja
+          include: { client: true }
         }
       }
     });
@@ -91,9 +90,9 @@ export async function PATCH(request: Request) {
     // ==========================================
     
     // 1. Kama gari limekamilika (Ready)
-    if (status === 'Ready') {
+    if (status === 'Ready' && updatedJob.vehicle?.client) {
       const clientPhone = updatedJob.vehicle.client.phone;
-      const clientName = updatedJob.vehicle.client.name.split(' ')[0]; // Jina la kwanza tu
+      const clientName = updatedJob.vehicle.client.name.split(' ')[0]; 
       const plateNumber = updatedJob.vehicle.plate;
       
       const smsMessage = `Habari ${clientName}, matengenezo ya gari lako (${plateNumber}) yamekamilika. Lipo tayari kuchukuliwa. Karibu sana MoTech-i! Kwa msaada: 0758406251`;
@@ -102,7 +101,7 @@ export async function PATCH(request: Request) {
     } 
     
     // 2. Kama gari limeanza kutengenezwa (In Progress)
-    else if (status === 'In Progress' && mechanicName) {
+    else if (status === 'In Progress' && mechanicName && updatedJob.vehicle?.client) {
       const clientPhone = updatedJob.vehicle.client.phone;
       const clientName = updatedJob.vehicle.client.name.split(' ')[0];
       const plateNumber = updatedJob.vehicle.plate;
