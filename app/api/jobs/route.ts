@@ -22,7 +22,8 @@ async function sendSMS(phone: string, message: string) {
   console.log(`\n💬 [SYSTEM AUTOMATION] SMS Inatumwa kwenda: ${formattedPhone}`);
   console.log(`📝 [MESSAGE]: "${message}"\n`);
 
-  // KODI HALISI YA KUTUMA SMS (Ukipata API Keys, ondoa '//' kwenye mistari inayofuata)
+  // KODI HALISI YA KUTUMA SMS (Ipo tayari kwa matumizi ukiondoa hizi double slashes mwanzo mwa kila mstari)
+  
   // try {
   //   await fetch('https://apisms.beem.africa/v1/send', {
   //     method: 'POST',
