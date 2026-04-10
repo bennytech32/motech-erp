@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Wrench, CheckCircle2, LogOut, Clock, Play, Loader2, FileText, PackagePlus, AlertCircle
+  Wrench, CheckCircle2, LogOut, Clock, Play, Loader2, FileText, PackagePlus, AlertCircle, History, ChevronDown
 } from 'lucide-react';
 
 export default function MechanicDashboard() {
@@ -13,6 +13,7 @@ export default function MechanicDashboard() {
   const [isLoading, setIsLoading] = useState(false);
 
   // DATA STATES
+  const [allSystemJobs, setAllSystemJobs] = useState<any[]>([]); 
   const [availableJobs, setAvailableJobs] = useState<any[]>([]); 
   const [myJobs, setMyJobs] = useState<any[]>([]); 
 
@@ -20,6 +21,9 @@ export default function MechanicDashboard() {
   const [diagnostics, setDiagnostics] = useState<{[key: string]: string}>({});
   const [partRequests, setPartRequests] = useState<{[key: string]: string}>({});
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  
+  // STATE KWA AJILI YA KUONYESHA HISTORIA YA GARI
+  const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('motech_mechanic');
@@ -27,22 +31,26 @@ export default function MechanicDashboard() {
       const user = JSON.parse(savedUser);
       setMechanicUser(user);
       setIsAuthenticated(true);
-      fetchJobs(user);
+      fetchJobs(); // Hatuhitaji kupitisha user hapa tena kwa sasa
     }
   }, []);
 
-  const fetchJobs = async (user: any) => {
+  const fetchJobs = async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/bookings', { cache: 'no-store' });
       const result = await res.json();
       
       if (result.success) {
-        // Gari ambazo hazina fundi
-        const available = result.data.filter((j: any) => j.status === 'Pending' && !j.mechanicId);
+        const allJobs = result.data;
+        setAllSystemJobs(allJobs); 
         
-        // Gari za huyu fundi (Tunatumia email kutambua badala ya fake ID)
-        const mine = result.data.filter((j: any) => j.mechanic?.email === user.email && j.status !== 'Collected');
+        // 1. GARI AMBAZO HAZIJAANZA KUTENGENEZWA (Zipo kwenye foleni)
+        const available = allJobs.filter((j: any) => j.status === 'Pending');
+        
+        // 2. GARI AMBAZO ZIPO GEREJI ZINATENGENEZWA (Hazijachukuliwa na mteja)
+        // Hii inahakikisha gari lolote ambalo limeanza kufanyiwa kazi linaonekana hapa bila kupotea!
+        const mine = allJobs.filter((j: any) => j.status !== 'Pending' && j.status !== 'Collected');
         
         setAvailableJobs(available);
         setMyJobs(mine);
@@ -50,7 +58,7 @@ export default function MechanicDashboard() {
         // Hifadhi notes za zamani ili fundi aendelee alipoishia
         const currentDiags: any = {};
         const currentParts: any = {};
-        mine.forEach(job => {
+        mine.forEach((job: any) => {
           currentDiags[job.id] = job.mechanicNotes || '';
           currentParts[job.id] = job.requestedParts || '';
         });
@@ -67,22 +75,23 @@ export default function MechanicDashboard() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
+    // Standard Mechanic Login
     if (loginForm.email === 'fundi@motech-i.com' && loginForm.password === 'fundi2026') {
       const user = { name: 'Master Mechanic', email: 'fundi@motech-i.com', role: 'Senior Tech' };
       localStorage.setItem('motech_mechanic', JSON.stringify(user));
       setMechanicUser(user);
       setIsAuthenticated(true);
-      fetchJobs(user);
+      fetchJobs();
     } else {
       alert("Invalid Credentials");
     }
     setIsLoggingIn(false);
   };
 
-  // KUCHUKUA KAZI MPYA NA KUMTAMBULISHA FUNDI DB
+  // KUCHUKUA KAZI MPYA (TAKE JOB)
   const handleTakeJob = async (jobId: string) => {
     try {
-      await fetch('/api/jobs', {
+      const res = await fetch('/api/jobs', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -92,17 +101,21 @@ export default function MechanicDashboard() {
           mechanicEmail: mechanicUser.email 
         })
       });
-      fetchJobs(mechanicUser);
-    } catch(err) {
-      alert("Error taking job.");
+      const data = await res.json();
+      if(!res.ok || !data.success) throw new Error(data.message || "Failed to take job");
+      
+      // Refresh Data baada ya kuchukua
+      fetchJobs();
+    } catch(err: any) {
+      alert(`Error taking job: ${err.message}`);
     }
   };
 
-  // KUSAVE UGONJWA, VIFAA NA KUBADILI STATUS
+  // KUSAVE UGONJWA, VIFAA NA KUBADILI STATUS (ERROR CATCHING)
   const handleSaveDiagnosisAndStatus = async (jobId: string, newStatus: string) => {
     setIsUpdating(jobId);
     try {
-      await fetch('/api/jobs', {
+      const res = await fetch('/api/jobs', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -112,9 +125,19 @@ export default function MechanicDashboard() {
           requestedParts: partRequests[jobId]
         })
       });
-      fetchJobs(mechanicUser);
-    } catch(err) {
-      alert("Error saving job updates.");
+      
+      const data = await res.json();
+      
+      // Kamata error ya Database
+      if (!res.ok || !data.success) {
+         throw new Error(data.message || "Database refused to save the updates.");
+      }
+
+      alert("Taarifa zimehifadhiwa kikamilifu!");
+      fetchJobs();
+    } catch(err: any) {
+      console.error(err);
+      alert(`KOSA LIMEJITOKEZA: ${err.message}\n\nTafadhali hakikisha umejaza taarifa kwa usahihi.`);
     } finally {
       setIsUpdating(null);
     }
@@ -158,7 +181,7 @@ export default function MechanicDashboard() {
             </div>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => fetchJobs(mechanicUser)} className="text-blue-600 font-bold bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 hover:bg-blue-100">Refresh Data</button>
+            <button onClick={() => fetchJobs()} className="text-blue-600 font-bold bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 hover:bg-blue-100">Refresh Data</button>
             <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 flex items-center gap-2 font-bold bg-slate-50 px-4 py-2 rounded-lg border border-slate-100"><LogOut size={16}/> Exit Bay</button>
           </div>
         </header>
@@ -168,15 +191,20 @@ export default function MechanicDashboard() {
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
             
-            {/* COLUMN 1 & 2: MY ACTIVE JOBS (Expanded for form) */}
+            {/* COLUMN 1 & 2: MY ACTIVE JOBS */}
             <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-              <h2 className="text-xl font-black text-slate-900 mb-6 border-b border-slate-100 pb-3 flex items-center gap-2"><Clock className="text-orange-500"/> My Active Jobs</h2>
+              <h2 className="text-xl font-black text-slate-900 mb-6 border-b border-slate-100 pb-3 flex items-center gap-2"><Clock className="text-orange-500"/> Cars in the Workshop</h2>
               {myJobs.length === 0 ? (
                 <div className="text-center p-12 text-slate-400"><Wrench size={48} className="mx-auto mb-4 opacity-50"/> <p className="text-lg">No active cars in your bay.</p></div>
               ) : (
                 <div className="space-y-6">
-                  {myJobs.map(job => (
-                    <div key={job.id} className="border border-slate-200 bg-slate-50 p-6 rounded-2xl shadow-sm">
+                  {myJobs.map(job => {
+                    
+                    // HISTORIA YA GARI (Kama liliwahi kuja)
+                    const vehicleHistory = allSystemJobs.filter(h => h.vehicleId === job.vehicleId && h.id !== job.id && (h.status === 'Collected' || h.status === 'Ready'));
+
+                    return (
+                    <div key={job.id} className={`border p-6 rounded-2xl shadow-sm ${job.status === 'Ready' ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
                       
                       {/* Car Info Header */}
                       <div className="flex justify-between items-start mb-4 border-b border-slate-200 pb-4">
@@ -185,14 +213,39 @@ export default function MechanicDashboard() {
                           <p className="font-bold text-slate-700">{job.vehicle.make} {job.vehicle.model}</p>
                         </div>
                         <div className="text-right">
-                          <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${job.status === 'Ready' ? 'bg-emerald-100 text-emerald-700' : job.status === 'Waiting Parts' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>{job.status}</span>
+                          <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${job.status === 'Ready' ? 'bg-emerald-600 text-white' : job.status === 'Waiting Parts' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>{job.status}</span>
                         </div>
                       </div>
+
+                      {/* HISTORIA YA GARI (Toggled) */}
+                      {vehicleHistory.length > 0 && (
+                        <div className="mb-6">
+                          <button 
+                            onClick={() => setExpandedHistory(expandedHistory === job.id ? null : job.id)} 
+                            className="w-full flex justify-between items-center bg-blue-50 border border-blue-200 p-3 rounded-xl text-blue-700 font-bold text-sm hover:bg-blue-100 transition"
+                          >
+                            <span className="flex items-center gap-2"><History size={16}/> Medical History: Gari hili liliwahi kufika gereji ({vehicleHistory.length} visits)</span>
+                            <ChevronDown size={16} className={`transform transition-transform ${expandedHistory === job.id ? 'rotate-180' : ''}`}/>
+                          </button>
+                          
+                          {expandedHistory === job.id && (
+                            <div className="mt-3 space-y-3 bg-white p-4 rounded-xl border border-slate-200 shadow-inner">
+                              {vehicleHistory.map((pastJob: any) => (
+                                <div key={pastJob.id} className="border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                                  <p className="text-xs text-slate-400 font-bold mb-1">{new Date(pastJob.createdAt).toLocaleDateString()} • Fundi: {pastJob.mechanic?.name || 'N/A'}</p>
+                                  <p className="text-sm text-slate-700"><span className="font-bold">Tatizo lililoletwa:</span> {pastJob.description || pastJob.clientNotes || 'Halikuandikwa'}</p>
+                                  <p className="text-sm text-emerald-700 bg-emerald-50 p-2 rounded mt-1"><span className="font-bold">Utatuzi (Notes za Fundi):</span> {pastJob.mechanicNotes || 'Fundi hakuandika notes.'}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Client's Reported Issue */}
                       <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-4 mb-6">
                         <h4 className="text-xs font-bold text-orange-600 uppercase tracking-widest mb-1 flex items-center gap-1"><AlertCircle size={14}/> Client Reported Issue:</h4>
-                        <p className="text-sm font-medium text-slate-700">{job.description || 'Routine Check / No specific issue reported.'}</p>
+                        <p className="text-sm font-medium text-slate-700">{job.description || job.clientNotes || 'Routine Check / No specific issue reported.'}</p>
                       </div>
 
                       {/* MECHANIC DIAGNOSIS & PARTS FORM */}
@@ -201,7 +254,7 @@ export default function MechanicDashboard() {
                           <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1"><FileText size={16} className="text-blue-600"/> Mechanic's Diagnosis</label>
                           <textarea 
                             rows={3} 
-                            placeholder="Andika ugonjwa uliougundua hapa..." 
+                            placeholder="Andika ugonjwa uliougundua na ulichofanya hapa..." 
                             value={diagnostics[job.id] || ''} 
                             onChange={e => setDiagnostics({...diagnostics, [job.id]: e.target.value})}
                             className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium" 
@@ -223,31 +276,31 @@ export default function MechanicDashboard() {
                       <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-200">
                         <button 
                           onClick={() => handleSaveDiagnosisAndStatus(job.id, 'In Progress')}
-                          disabled={isUpdating === job.id}
-                          className="flex-1 bg-slate-900 text-white font-bold py-3 px-4 rounded-xl hover:bg-slate-800 flex justify-center items-center gap-2 text-sm transition"
+                          disabled={isUpdating === job.id || job.status === 'Ready'}
+                          className={`flex-1 font-bold py-3 px-4 rounded-xl flex justify-center items-center gap-2 text-sm transition ${job.status === 'Ready' ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
                         >
-                          {isUpdating === job.id ? <Loader2 size={16} className="animate-spin"/> : <Wrench size={16}/>} Save Notes & Continue Fixing
+                          {isUpdating === job.id ? <Loader2 size={16} className="animate-spin"/> : <Wrench size={16}/>} Save Notes & Update
                         </button>
                         
                         <button 
                           onClick={() => handleSaveDiagnosisAndStatus(job.id, 'Waiting Parts')}
-                          disabled={isUpdating === job.id}
-                          className="flex-1 bg-red-50 text-red-600 border border-red-200 font-bold py-3 px-4 rounded-xl hover:bg-red-600 hover:text-white flex justify-center items-center gap-2 text-sm transition"
+                          disabled={isUpdating === job.id || job.status === 'Ready'}
+                          className={`flex-1 font-bold py-3 px-4 rounded-xl flex justify-center items-center gap-2 text-sm transition ${job.status === 'Ready' ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white'}`}
                         >
                           Request Parts (Pause)
                         </button>
 
                         <button 
                           onClick={() => handleSaveDiagnosisAndStatus(job.id, 'Ready')}
-                          disabled={isUpdating === job.id}
-                          className="flex-1 bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-emerald-700 flex justify-center items-center gap-2 text-sm transition shadow-lg shadow-emerald-600/20"
+                          disabled={isUpdating === job.id || job.status === 'Ready'}
+                          className={`flex-1 font-bold py-3 px-4 rounded-xl flex justify-center items-center gap-2 text-sm transition shadow-lg ${job.status === 'Ready' ? 'bg-emerald-200 text-emerald-600 cursor-not-allowed shadow-none' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20'}`}
                         >
-                          <CheckCircle2 size={16}/> Job Complete (Ready)
+                          <CheckCircle2 size={16}/> Mark as Ready
                         </button>
                       </div>
 
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
             </div>

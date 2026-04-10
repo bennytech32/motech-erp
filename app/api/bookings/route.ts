@@ -1,69 +1,71 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-// HII INAZUIA CACHING - Inafanya mfumo uvute data mpya kila mara
 export const dynamic = 'force-dynamic';
-
 const prisma = new PrismaClient();
 
-// ============================================================================
-// 1. KUTENGENEZA BOOKING MPYA (Mteja anapojaza Fomu)
-// ============================================================================
-export async function POST(request: Request) {
+export async function GET() {
   try {
-    const body = await request.json();
-    const { name, phone, email, make, model, plate, vin, issue, serviceType, date, time } = body;
-
-    // Tafuta au Sajili Mteja
-    let client = await prisma.client.findFirst({ where: { phone } });
-    if (!client) {
-      client = await prisma.client.create({ data: { name, phone, email } });
-    }
-
-    // Tafuta au Sajili Gari
-    let vehicle = await prisma.vehicle.findUnique({ where: { plate: plate.toUpperCase() } });
-    if (!vehicle) {
-      vehicle = await prisma.vehicle.create({
-        data: { clientId: client.id, make, model, plate: plate.toUpperCase(), vin }
-      });
-    }
-
-    // Tengeneza Booking (Job)
-    const appointmentDate = new Date(`${date} ${time}`);
-    const newJob = await prisma.job.create({
-      data: {
-        vehicleId: vehicle.id,
-        serviceType,
-        description: issue,
-        status: "Pending",
-        appointment: appointmentDate,
+    const jobs = await prisma.job.findMany({
+      include: {
+        vehicle: {
+          include: { client: true }
+        },
+        mechanic: true
       },
-      include: { vehicle: { include: { client: true } } }
+      orderBy: { createdAt: 'desc' }
     });
-
-    return NextResponse.json({ success: true, data: newJob }, { status: 201 });
-  } catch (error) {
-    console.error("Error creating booking:", error);
-    return NextResponse.json({ success: false, message: 'Failed to create booking' }, { status: 500 });
+    return NextResponse.json({ success: true, data: jobs });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
 }
 
-// ============================================================================
-// 2. KUVUTA BOOKINGS ZOTE (Kwa ajili ya Dashboard ya Reception/Admin)
-// ============================================================================
-export async function GET() {
+export async function POST(req: Request) {
   try {
-    const bookings = await prisma.job.findMany({
-      orderBy: { createdAt: 'desc' }, // Zilizotoka kuingia zikae juu
-      include: {
-        vehicle: { include: { client: true } },
-        mechanic: true
-      }
+    const body = await req.json();
+    const { name, phone, email, make, model, plate, issue, serviceType, vin } = body;
+
+    // 1. Tafuta Mteja kwa kutumia findFirst
+    let client = await prisma.client.findFirst({ where: { phone } });
+    if (!client) {
+      client = await prisma.client.create({ 
+        data: { name, phone, email: email || null } 
+      });
+    }
+
+    // 2. Tafuta Gari kwa kutumia findFirst
+    let vehicle = await prisma.vehicle.findFirst({ where: { plate } });
+    if (!vehicle) {
+      vehicle = await prisma.vehicle.create({
+        data: { plate, make, model, vin: vin || null, clientId: client.id }
+      });
+    }
+
+    // 3. Tengeneza Kazi (Job) - HAPA NDIPO TULIPOREKEBISHA 'description'
+    const jobData: any = {
+      vehicleId: vehicle.id,
+      serviceType: serviceType || 'General Repair',
+      status: 'Pending'
+    };
+
+    // Tunatumia 'description' badala ya 'issue' kama Schema yako inavyotaka
+    if (issue) {
+      jobData.description = issue; 
+    }
+
+    const job = await prisma.job.create({
+      data: jobData,
+      include: { vehicle: { include: { client: true } } }
     });
-    
-    return NextResponse.json({ success: true, data: bookings }, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching bookings:", error);
-    return NextResponse.json({ success: false, message: 'Failed to fetch bookings' }, { status: 500 });
+
+    return NextResponse.json({ success: true, message: 'Booking successful', data: job }, { status: 201 });
+
+  } catch (error: any) {
+    console.error("💥 DATABASE ERROR (Booking):", error.message);
+    return NextResponse.json({ 
+      success: false, 
+      message: error.message || 'System Error' 
+    }, { status: 500 });
   }
 }

@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
-  Calendar, Clock, CarFront, Wrench, ArrowRight, CheckCircle2, 
-  User, Phone, Mail, AlertCircle, Loader2, Info, ArrowLeft
+  CarFront, User, Phone, Mail, FileText, CheckCircle2, 
+  AlertTriangle, Loader2, ArrowLeft, Calendar, Wrench, ShieldCheck 
 } from 'lucide-react';
 
 export default function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [success, setSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [formData, setFormData] = useState({
     name: '',
@@ -18,80 +19,57 @@ export default function BookingPage() {
     make: '',
     model: '',
     plate: '',
+    vin: '',
     serviceType: 'General Repair',
-    date: '',
-    time: '08:00 AM',
     issue: ''
   });
-
-  const timeSlots = ["08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM"];
-  const serviceTypes = ["General Repair", "Computer Diagnostics", "Pre-Purchase Inspection", "Routine Maintenance", "Other"];
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitStatus('idle');
+    setErrorMessage("");
 
     try {
-      // TUNATUMA DATA KWENYE BACKEND YETU YA PRISMA (NEON DB)
       const response = await fetch('/api/bookings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit booking');
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        // Hapa tunakamata KOSA HALISI kutoka kwenye Database badala ya kuficha
+        throw new Error(data.message || 'System failed to submit booking');
       }
 
       // SHOW SUCCESS
-      setSubmitStatus('success');
-      
-    } catch (error) {
+      setSuccess(true);
+    } catch (error: any) {
       console.error("Booking Error:", error);
-      setSubmitStatus('error');
+      setErrorMessage(error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ==========================================
-  // SUCCESS UI
-  // ==========================================
-  if (submitStatus === 'success') {
+  if (success) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-2xl w-full text-center shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-500">
-          <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white p-8 rounded-[2.5rem] shadow-2xl border border-slate-100 text-center animate-in zoom-in duration-500">
+          <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 size={48} />
           </div>
-          <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4">Booking Confirmed!</h2>
-          <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-            Thank you, <span className="font-bold text-slate-900">{formData.name}</span>. Your appointment for the <span className="font-bold text-slate-900">{formData.make} {formData.model}</span> is scheduled for <span className="font-bold text-blue-600">{formData.date}</span> at <span className="font-bold text-blue-600">{formData.time}</span>.
+          <h2 className="text-3xl font-black text-slate-900 mb-3">Booking Confirmed!</h2>
+          <p className="text-slate-600 mb-8 leading-relaxed">
+            Thank you, <span className="font-bold">{formData.name}</span>. Your vehicle <span className="font-bold uppercase">{formData.plate}</span> has been scheduled. You can now track its status via the Client Portal.
           </p>
-          
-          <div className="bg-slate-50 p-6 rounded-2xl mb-8 text-left border border-slate-200">
-            <h4 className="font-bold text-slate-900 mb-4 border-b border-slate-200 pb-2">What happens next?</h4>
-            <ul className="space-y-3 text-slate-600 text-sm">
-              <li className="flex items-start gap-2"><CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5"/> You will receive a confirmation email and SMS shortly.</li>
-              <li className="flex items-start gap-2"><CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5"/> Our reception team will review your request.</li>
-              <li className="flex items-start gap-2"><CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5"/> Please arrive 15 minutes before your scheduled time.</li>
-            </ul>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/" className="bg-slate-100 text-slate-700 font-bold px-8 py-4 rounded-xl hover:bg-slate-200 transition flex items-center justify-center gap-2">
-              <ArrowLeft size={18}/> Back to Home
+          <div className="flex flex-col gap-3">
+            <Link href="/client-portal" className="w-full bg-blue-600 text-white font-black py-4 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+              Go to Client Portal
             </Link>
-            <Link href="/client-portal" className="bg-blue-600 text-white font-bold px-8 py-4 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition flex items-center justify-center gap-2">
-              Go to Client Portal <ArrowRight size={18}/>
+            <Link href="/" className="w-full bg-slate-100 text-slate-700 font-bold py-4 rounded-xl hover:bg-slate-200 transition">
+              Return to Home
             </Link>
           </div>
         </div>
@@ -99,139 +77,120 @@ export default function BookingPage() {
     );
   }
 
-  // ==========================================
-  // BOOKING FORM UI
-  // ==========================================
   return (
-    <div className="min-h-screen bg-slate-50 font-sans flex flex-col pb-20">
-      
-      {/* HEADER */}
-      <nav className="bg-white border-b border-slate-200 py-4 px-4 sm:px-6 sticky top-0 z-40 shadow-sm shrink-0">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-bold transition">
-            <ArrowLeft size={20} /> Back to Home
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-1.5 rounded-lg text-white">
-              <Calendar size={20} />
-            </div>
-            <span className="font-extrabold text-slate-900 hidden sm:block">Book Service</span>
-          </div>
+    <div className="min-h-screen bg-slate-950 font-sans selection:bg-blue-500/30 relative">
+      {/* Background Effects */}
+      <div className="absolute top-0 left-0 w-full h-[60vh] overflow-hidden z-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-600/20 blur-[120px]"></div>
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1613214149922-f1809c99b414?q=80&w=2000')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
+      </div>
+
+      <nav className="relative z-10 p-6 max-w-5xl mx-auto flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition font-bold text-sm bg-slate-900/50 px-4 py-2 rounded-full border border-slate-800 backdrop-blur-md">
+          <ArrowLeft size={16} /> Back
+        </Link>
+        <div className="flex items-center gap-2">
+          <CarFront size={24} className="text-blue-500" />
+          <span className="text-xl font-black text-white tracking-tight">MoTech-i</span>
         </div>
       </nav>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 mt-12 animate-in fade-in duration-500">
-        
+      <div className="relative z-10 max-w-3xl mx-auto px-4 pb-20">
         <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Schedule an Appointment</h1>
-          <p className="text-slate-600 text-lg">Fill out the form below to book your service slot instantly.</p>
+          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">Book a Service</h1>
+          <p className="text-slate-400 text-lg">Fill in your vehicle details and we'll handle the rest.</p>
         </div>
 
-        <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 p-6 md:p-10">
+        <form onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-2xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
           
-          {submitStatus === 'error' && (
-            <div className="mb-8 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-start gap-3">
-              <AlertCircle size={20} className="shrink-0 mt-0.5" />
-              <p className="font-medium text-sm">We encountered an issue. Please check your connection and try again.</p>
+          {errorMessage && (
+            <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl flex items-center gap-3 text-sm font-bold">
+              <AlertTriangle size={20} className="shrink-0" />
+              <span>{errorMessage}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-10">
-            
-            {/* SECTION 1: CLIENT DETAILS */}
-            <div>
-              <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                <User className="text-blue-600"/> 1. Your Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Full Name <span className="text-red-500">*</span></label>
-                  <input type="text" name="name" required placeholder="John Doe" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600" />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Phone Number <span className="text-red-500">*</span></label>
-                  <input type="tel" name="phone" required placeholder="0712345678" value={formData.phone} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600" />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Email Address</label>
-                  <input type="email" name="email" placeholder="john@email.com" value={formData.email} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600" />
-                </div>
+          {/* Section 1: Client Details */}
+          <div>
+            <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+              <User className="text-blue-600" size={20}/> Personal Details
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-1 ml-1">Full Name *</label>
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium" placeholder="e.g. John Doe" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-1 ml-1">Phone Number *</label>
+                <input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium" placeholder="e.g. 0712345678" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-slate-600 mb-1 ml-1">Email Address (Optional)</label>
+                <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium" placeholder="e.g. john@example.com" />
               </div>
             </div>
+          </div>
 
-            {/* SECTION 2: VEHICLE DETAILS */}
-            <div>
-              <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                <CarFront className="text-blue-600"/> 2. Vehicle Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Make (Brand) <span className="text-red-500">*</span></label>
-                  <input type="text" name="make" required placeholder="e.g. Toyota" value={formData.make} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600" />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Model <span className="text-red-500">*</span></label>
-                  <input type="text" name="model" required placeholder="e.g. Land Cruiser" value={formData.model} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600" />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">License Plate <span className="text-red-500">*</span></label>
-                  <input type="text" name="plate" required placeholder="e.g. T 123 ABC" value={formData.plate} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 uppercase" />
-                </div>
+          {/* Section 2: Vehicle Details */}
+          <div>
+            <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+              <CarFront className="text-emerald-600" size={20}/> Vehicle Details
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-1 ml-1">Make (Brand) *</label>
+                <input required type="text" value={formData.make} onChange={e => setFormData({...formData, make: e.target.value})} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium" placeholder="e.g. Toyota" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-1 ml-1">Model & Year *</label>
+                <input required type="text" value={formData.model} onChange={e => setFormData({...formData, model: e.target.value})} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium" placeholder="e.g. Harrier 2018" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-1 ml-1">Plate Number *</label>
+                <input required type="text" value={formData.plate} onChange={e => setFormData({...formData, plate: e.target.value})} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold uppercase" placeholder="e.g. T 123 ABC" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-1 ml-1">VIN / Chassis No. (Optional)</label>
+                <input type="text" value={formData.vin} onChange={e => setFormData({...formData, vin: e.target.value})} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium uppercase" placeholder="Leave blank if unsure" />
               </div>
             </div>
+          </div>
 
-            {/* SECTION 3: SERVICE & SCHEDULE */}
-            <div>
-              <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                <Wrench className="text-blue-600"/> 3. Service & Schedule
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Left Side: Service & Date */}
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Service Type <span className="text-red-500">*</span></label>
-                    <select name="serviceType" value={formData.serviceType} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-700">
-                      {serviceTypes.map(type => <option key={type} value={type}>{type}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Preferred Date <span className="text-red-500">*</span></label>
-                    <input type="date" name="date" required min={new Date().toISOString().split('T')[0]} value={formData.date} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-700" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1.5">Preferred Time <span className="text-red-500">*</span></label>
-                    <select name="time" value={formData.time} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-700">
-                      {timeSlots.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Right Side: Issue Description */}
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Describe the issue (Optional)</label>
-                  <textarea name="issue" rows={7} placeholder="What seems to be the problem with the car?..." value={formData.issue} onChange={handleInputChange} className="w-full h-[88%] px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 resize-none"></textarea>
-                </div>
-
+          {/* Section 3: Service Request */}
+          <div>
+            <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+              <Wrench className="text-orange-500" size={20}/> Service Details
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-1 ml-1">Type of Service *</label>
+                <select value={formData.serviceType} onChange={e => setFormData({...formData, serviceType: e.target.value})} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-bold text-slate-700">
+                  <option>General Repair</option>
+                  <option>Full Engine Service</option>
+                  <option>Computer Diagnostics</option>
+                  <option>Pre-Purchase Inspection</option>
+                  <option>Suspension & Brakes</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-600 mb-1 ml-1">Describe the Issue *</label>
+                <textarea required rows={4} value={formData.issue} onChange={e => setFormData({...formData, issue: e.target.value})} className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 font-medium" placeholder="E.g. The check engine light is on, and the brakes are squeaking..."></textarea>
               </div>
             </div>
+          </div>
 
-            {/* SUBMIT BUTTON */}
-            <div className="pt-6 border-t border-slate-100 flex flex-col items-center">
-              <button type="submit" disabled={isSubmitting} className="w-full md:w-auto min-w-[300px] bg-blue-600 text-white px-8 py-4 rounded-xl font-black text-lg hover:bg-blue-700 transition flex justify-center items-center gap-2 shadow-xl shadow-blue-600/30 disabled:opacity-70 disabled:cursor-not-allowed">
-                {isSubmitting ? (
-                  <><Loader2 size={24} className="animate-spin"/> Processing...</>
-                ) : (
-                  <><CheckCircle2 size={24}/> Confirm Booking</>
-                )}
-              </button>
-              <p className="text-xs text-slate-400 mt-4 flex items-center gap-1"><Info size={14}/> By booking, you agree to our terms of service.</p>
-            </div>
+          {/* Submit Button */}
+          <div className="pt-4">
+            <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 text-white font-black text-lg py-5 rounded-2xl hover:bg-blue-700 hover:scale-[1.01] transition-all shadow-xl shadow-blue-600/30 flex items-center justify-center gap-3">
+              {isSubmitting ? <Loader2 className="animate-spin" size={24} /> : <><Calendar size={24}/> Confirm Booking</>}
+            </button>
+            <p className="text-center text-xs font-bold text-slate-400 mt-4 flex items-center justify-center gap-1">
+              <ShieldCheck size={14}/> Your data is securely encrypted.
+            </p>
+          </div>
 
-          </form>
-        </div>
-      </main>
+        </form>
+      </div>
     </div>
   );
 }
