@@ -1,10 +1,9 @@
-// app/layout.tsx
 import type { Metadata } from "next";
-import "./globals.css"; // HII NDIO INAYORUDISHA RANGI NA MPANGILIO
+import "./globals.css"; // <--- HUU MSTARI NDIO MUHIMU KULIKO YOTE!
 
 export const metadata: Metadata = {
-  title: "MoTech-i | Premium Auto Care",
-  description: "Intelligent Autoworks Management System",
+  title: "MoTech-i ERP",
+  description: "Professional Auto Garage Management System",
 };
 
 export default function RootLayout({

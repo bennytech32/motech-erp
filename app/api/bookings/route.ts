@@ -1,16 +1,13 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma'; // <--- MUUNGANISHO MPYA NA SALAMA
 
 export const dynamic = 'force-dynamic';
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
     const jobs = await prisma.job.findMany({
       include: {
-        vehicle: {
-          include: { client: true }
-        },
+        vehicle: { include: { client: true } },
         mechanic: true
       },
       orderBy: { createdAt: 'desc' }
@@ -26,7 +23,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, phone, email, make, model, plate, issue, serviceType, vin } = body;
 
-    // 1. Tafuta Mteja kwa kutumia findFirst
+    // 1. Tafuta Mteja 
     let client = await prisma.client.findFirst({ where: { phone } });
     if (!client) {
       client = await prisma.client.create({ 
@@ -34,7 +31,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // 2. Tafuta Gari kwa kutumia findFirst
+    // 2. Tafuta Gari 
     let vehicle = await prisma.vehicle.findFirst({ where: { plate } });
     if (!vehicle) {
       vehicle = await prisma.vehicle.create({
@@ -42,14 +39,13 @@ export async function POST(req: Request) {
       });
     }
 
-    // 3. Tengeneza Kazi (Job) - HAPA NDIPO TULIPOREKEBISHA 'description'
+    // 3. Tengeneza Kazi (Job)
     const jobData: any = {
       vehicleId: vehicle.id,
       serviceType: serviceType || 'General Repair',
       status: 'Pending'
     };
 
-    // Tunatumia 'description' badala ya 'issue' kama Schema yako inavyotaka
     if (issue) {
       jobData.description = issue; 
     }
