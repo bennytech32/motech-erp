@@ -892,7 +892,22 @@ export default function ReceptionDashboard() {
                            <td className="p-4 font-bold text-slate-900">{booking.vehicle?.client?.name}<br/><span className="text-xs text-slate-400 font-normal">{booking.vehicle?.client?.phone}</span></td>
                            <td className="p-4 text-slate-600 font-medium">{booking.vehicle?.make} {booking.vehicle?.model}<br/><span className="text-xs text-blue-600 font-bold uppercase">{booking.vehicle?.plate}</span></td>
                            <td className="p-4 text-slate-600 font-medium">{booking.serviceType}</td>
-                           <td className="p-4 text-slate-600 font-medium">{booking.appointment ? new Date(booking.appointment).toLocaleString() : 'N/A'}</td>
+                           
+                           {/* MABADILIKO YA TAREHE YAPO HAPA (Umeomba nifanye modify hapa tu bila kufuta kitu) */}
+                           <td className="p-4 text-slate-600 font-medium">
+                             {booking.appointmentDate || booking.appointment ? (
+                               <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 font-bold text-sm">
+                                 {new Date(booking.appointmentDate || booking.appointment).toLocaleDateString('en-GB', { 
+                                   day: '2-digit', 
+                                   month: 'short', 
+                                   year: 'numeric' 
+                                 })}
+                               </span>
+                             ) : (
+                               <span className="text-slate-400 italic">N/A</span>
+                             )}
+                           </td>
+
                            <td className="p-4 text-right">
                               <button onClick={() => handleStatusChange(booking.id, 'In Progress')} className="bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-600 hover:text-white transition">Approve & Check-in</button>
                            </td>
