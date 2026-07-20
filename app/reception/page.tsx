@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { 
@@ -14,10 +12,10 @@ import {
 } from 'lucide-react';
 
 // ==========================================
-// UNGANISHA SUPABASE (KWA AJILI YA KULOGIN RECEPTIONIST WA ADMIN TU)
+// UNGANISHA SUPABASE KWA NJIA SALAMA (Inazuia Vercel Build Error)
 // ==========================================
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_key';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function ReceptionDashboard() {
@@ -468,7 +466,7 @@ export default function ReceptionDashboard() {
   // =========================================================================
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans">
-       
+      
       {/* ================= MODALS ================= */}
 
       {/* 1. POS Receipt Modal (Walk-in Sales) */}
@@ -611,7 +609,7 @@ export default function ReceptionDashboard() {
               <h3 className="font-black text-2xl text-slate-900 flex items-center gap-2"><FileText className="text-blue-600"/> Create Vehicle Invoice</h3>
               <button onClick={() => {setIsInvoiceModalOpen(false); setInvoiceClient({name:'', phone:'', plate:'', jobId:''});}} className="text-slate-400 hover:text-red-500 bg-slate-100 p-2 rounded-full"><X size={20}/></button>
             </div>
-             
+            
             <form onSubmit={handleGenerateInvoice} className="space-y-6">
               <div className="grid grid-cols-3 gap-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
                 <div>
@@ -627,7 +625,7 @@ export default function ReceptionDashboard() {
                   <input required type="text" placeholder="e.g. T 123 ABC" value={invoiceClient.plate} onChange={e => setInvoiceClient({...invoiceClient, plate: e.target.value})} className="w-full bg-transparent font-black text-slate-900 uppercase outline-none mt-1" />
                 </div>
               </div>
-               
+              
               <div>
                 <div className="flex justify-between items-end mb-2 border-b border-slate-100 pb-2">
                   <label className="block text-sm font-black text-slate-900">Spare Parts & Consumables</label>
@@ -691,7 +689,7 @@ export default function ReceptionDashboard() {
               <h3 className="font-black text-xl text-slate-900 flex items-center gap-2"><MessageSquare className="text-blue-600"/> Client Communication</h3>
               <button onClick={() => setIsMessageModalOpen(false)} className="text-slate-400 hover:text-red-500 bg-slate-100 p-2 rounded-full"><X size={20}/></button>
             </div>
-             
+            
             <form onSubmit={handleSendMessage} className="space-y-5">
               <div>
                 <label className="block text-sm font-bold mb-2 text-slate-700">Message Type</label>
@@ -727,7 +725,7 @@ export default function ReceptionDashboard() {
         <div className="p-6 flex items-center gap-3 border-b border-slate-800 bg-slate-950">
           <div className="bg-blue-600 p-2 rounded-lg text-white"><Users size={20} /></div>
           <div>
-            <span className="text-xl font-extrabold text-white tracking-tight block leading-none">MoTech-i</span>
+            <span className="text-xl font-extrabold text-white tracking-tight block leading-none">MoTECH-i</span>
             <span className="text-[10px] text-blue-400 font-bold tracking-widest uppercase">Front Desk</span>
           </div>
         </div>
@@ -745,11 +743,11 @@ export default function ReceptionDashboard() {
               <div className="flex items-center gap-3"><Wrench size={18} /> Garage Tracking</div>
               {partRequests.length > 0 && <span className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-bounce">{partRequests.length}</span>}
             </button>
-             
+            
             <button onClick={() => setActiveTab('history')} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'history' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-white'}`}>
               <div className="flex items-center gap-3"><History size={18} /> History & Follow-up</div>
             </button>
-             
+            
             <button onClick={() => setActiveTab('sos')} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'sos' ? 'bg-red-600 text-white shadow-lg' : 'hover:bg-slate-800 hover:text-white'}`}>
               <div className="flex items-center gap-3"><AlertTriangle size={18} className={activeTab !== 'sos' ? "text-red-500" : ""} /> SOS Alerts</div>
               {stats.sosAlerts > 0 && <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse">{stats.sosAlerts}</span>}
@@ -799,7 +797,7 @@ export default function ReceptionDashboard() {
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 print:hidden"><Loader2 className="animate-spin mb-4" size={40} /><p className="font-bold">Syncing Database...</p></div>
         ) : (
           <div className="animate-in fade-in duration-500 print:block">
-             
+            
             {/* ======================= TAB: OVERVIEW ======================= */}
             {activeTab === 'overview' && (
               <div className="space-y-6">
@@ -927,7 +925,7 @@ export default function ReceptionDashboard() {
                            <td className="p-4 font-bold text-slate-900">{booking.vehicle?.client?.name}<br/><span className="text-xs text-slate-400 font-normal">{booking.vehicle?.client?.phone}</span></td>
                            <td className="p-4 text-slate-600 font-medium">{booking.vehicle?.make} {booking.vehicle?.model}<br/><span className="text-xs text-blue-600 font-bold uppercase">{booking.vehicle?.plate}</span></td>
                            <td className="p-4 text-slate-600 font-medium">{booking.serviceType}</td>
-                            
+                           
                            {/* MABADILIKO YA TAREHE YAPO HAPA */}
                            <td className="p-4 text-slate-600 font-medium">
                              {booking.appointmentDate || booking.appointment ? (
@@ -957,7 +955,7 @@ export default function ReceptionDashboard() {
             {/* ======================= TAB: GARAGE TRACKING ======================= */}
             {activeTab === 'tracking' && (
               <div>
-                 
+                
                 {/* ALERTS KWA AJILI YA MECHANIC PART REQUESTS */}
                 {partRequests.length > 0 && (
                   <div className="mb-6 bg-orange-50 border-2 border-orange-200 rounded-2xl p-6 shadow-sm">
@@ -1102,7 +1100,7 @@ export default function ReceptionDashboard() {
             {/* ======================= TAB: POS (SPARE PARTS SALES) ======================= */}
             {activeTab === 'pos' && (
               <div className="flex flex-col lg:flex-row gap-6 h-[75vh]">
-                 
+                
                 {/* INVENTORY SIDE */}
                 <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
                   <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center gap-3">

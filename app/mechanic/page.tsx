@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { 
@@ -9,10 +7,10 @@ import {
 } from 'lucide-react';
 
 // ==========================================
-// UNGANISHA SUPABASE (KWA AJILI YA KULOGIN MAFUNDI WA ADMIN TU)
+// UNGANISHA SUPABASE KWA NJIA SALAMA (Inazuia Vercel Build Error)
 // ==========================================
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_key';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function MechanicDashboard() {
