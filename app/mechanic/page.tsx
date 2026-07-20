@@ -1,15 +1,24 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { 
-  Wrench, CheckCircle2, LogOut, Clock, Play, Loader2, FileText, PackagePlus, AlertCircle, History, ChevronDown
+  Wrench, CheckCircle2, LogOut, Clock, Play, Loader2, FileText, PackagePlus, AlertCircle, History, ChevronDown, ShieldAlert
 } from 'lucide-react';
+
+// ==========================================
+// UNGANISHA SUPABASE (KWA AJILI YA KULOGIN MAFUNDI WA ADMIN TU)
+// ==========================================
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function MechanicDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [mechanicUser, setMechanicUser] = useState<any>(null);
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // DATA STATES
@@ -31,7 +40,7 @@ export default function MechanicDashboard() {
       const user = JSON.parse(savedUser);
       setMechanicUser(user);
       setIsAuthenticated(true);
-      fetchJobs(); // Hatuhitaji kupitisha user hapa tena kwa sasa
+      fetchJobs(); 
     }
   }, []);
 
@@ -49,7 +58,6 @@ export default function MechanicDashboard() {
         const available = allJobs.filter((j: any) => j.status === 'Pending');
         
         // 2. GARI AMBAZO ZIPO GEREJI ZINATENGENEZWA (Hazijachukuliwa na mteja)
-        // Hii inahakikisha gari lolote ambalo limeanza kufanyiwa kazi linaonekana hapa bila kupotea!
         const mine = allJobs.filter((j: any) => j.status !== 'Pending' && j.status !== 'Collected');
         
         setAvailableJobs(available);
@@ -72,20 +80,46 @@ export default function MechanicDashboard() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  // ==========================================
+  // REAL DATABASE LOGIN (KUTOKA KWA ADMIN TU)
+  // ==========================================
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
-    // Standard Mechanic Login
-    if (loginForm.email === 'fundi@motech-i.com' && loginForm.password === 'fundi2026') {
-      const user = { name: 'Master Mechanic', email: 'fundi@motech-i.com', role: 'Senior Tech' };
-      localStorage.setItem('motech_mechanic', JSON.stringify(user));
-      setMechanicUser(user);
-      setIsAuthenticated(true);
-      fetchJobs();
-    } else {
-      alert("Invalid Credentials");
+    setLoginError("");
+
+    try {
+      // 🔴 INATAFUTA MTUMIAJI KWENYE DATABASE YA 'profiles' au 'staff'
+      // Hakikisha jina la table (profiles) linaendana na kule Admin anapotengeneza Staff.
+      const { data: staff, error } = await supabase
+        .from('profiles') // Unaweza kubadilisha iwe 'staff' kama Admin anasave kwenye table ya staff
+        .select('*')
+        .eq('email', loginForm.email)
+        .eq('password', loginForm.password) // Hapa inahakiki password
+        .single();
+
+      if (error || !staff) {
+        setLoginError("Taarifa si sahihi! Hakikisha umepewa idhini na Admin.");
+        setIsLoggingIn(false);
+        return;
+      }
+
+      // 🔴 INAHAKIKISHA KUWA HUYU NI FUNDI (Mechanic) NA SIO MTEJA WALA ADMIN
+      if (staff.role === 'Mechanic' || staff.role === 'Senior Tech') {
+        const user = { id: staff.id, name: staff.name, email: staff.email, role: staff.role };
+        localStorage.setItem('motech_mechanic', JSON.stringify(user));
+        setMechanicUser(user);
+        setIsAuthenticated(true);
+        fetchJobs();
+      } else {
+        setLoginError("Huna idhini ya kuingia hapa. Eneo hili ni la Mafundi pekee.");
+      }
+    } catch (err) {
+      console.error(err);
+      setLoginError("Kuna tatizo la mtandao, tafadhali jaribu tena.");
+    } finally {
+      setIsLoggingIn(false);
     }
-    setIsLoggingIn(false);
   };
 
   // KUCHUKUA KAZI MPYA (TAKE JOB)
@@ -128,7 +162,6 @@ export default function MechanicDashboard() {
       
       const data = await res.json();
       
-      // Kamata error ya Database
       if (!res.ok || !data.success) {
          throw new Error(data.message || "Database refused to save the updates.");
       }
@@ -146,6 +179,7 @@ export default function MechanicDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('motech_mechanic');
     setIsAuthenticated(false);
+    setMechanicUser(null);
   };
 
   if (!isAuthenticated) {
@@ -153,14 +187,32 @@ export default function MechanicDashboard() {
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="bg-slate-800 border border-slate-700 rounded-3xl p-8 max-w-md w-full shadow-2xl">
           <div className="text-center mb-8">
-            <Wrench size={48} className="mx-auto text-orange-500 mb-4" />
-            <h1 className="text-3xl font-black text-white">Workshop Bay</h1>
-            <p className="text-slate-400 mt-2">Mechanic Login</p>
+            <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-orange-500/20">
+              <Wrench size={40} className="text-orange-500" />
+            </div>
+            <h1 className="text-3xl font-black text-white tracking-tight">Workshop Bay</h1>
+            <p className="text-slate-400 mt-2 text-sm font-medium uppercase tracking-widest">Authorized Mechanics Only</p>
           </div>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <input type="email" required placeholder="fundi@motech-i.com" value={loginForm.email} onChange={e => setLoginForm({...loginForm, email: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-orange-500" />
-            <input type="password" required placeholder="fundi2026" value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})} className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-orange-500" />
-            <button type="submit" disabled={isLoggingIn} className="w-full bg-orange-600 text-white font-bold py-3 rounded-xl hover:bg-orange-700">Enter Workshop</button>
+          
+          {loginError && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl mb-6 text-sm font-bold flex items-start gap-3">
+              <ShieldAlert size={18} className="shrink-0 mt-0.5" /> 
+              <p>{loginError}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Staff Email</label>
+              <input type="email" required placeholder="Enter your staff email" value={loginForm.email} onChange={e => setLoginForm({...loginForm, email: e.target.value})} className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Password</label>
+              <input type="password" required placeholder="••••••••" value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})} className="w-full px-4 py-3.5 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition" />
+            </div>
+            <button type="submit" disabled={isLoggingIn} className="w-full bg-orange-600 text-white font-black py-4 rounded-xl hover:bg-orange-700 transition flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20 mt-2">
+              {isLoggingIn ? <Loader2 className="animate-spin" size={20} /> : 'Enter Workshop'}
+            </button>
           </form>
         </div>
       </div>
@@ -177,17 +229,17 @@ export default function MechanicDashboard() {
             <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center"><Wrench size={24}/></div>
             <div>
               <h1 className="text-2xl font-black text-slate-900">Mechanic Bay</h1>
-              <p className="text-sm font-bold text-slate-500">Welcome, {mechanicUser.name}</p>
+              <p className="text-sm font-bold text-slate-500">Welcome, <span className="text-blue-600">{mechanicUser.name}</span></p>
             </div>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => fetchJobs()} className="text-blue-600 font-bold bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 hover:bg-blue-100">Refresh Data</button>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 flex items-center gap-2 font-bold bg-slate-50 px-4 py-2 rounded-lg border border-slate-100"><LogOut size={16}/> Exit Bay</button>
+            <button onClick={() => fetchJobs()} className="text-blue-600 font-bold bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition">Refresh Data</button>
+            <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 flex items-center gap-2 font-bold bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 transition"><LogOut size={16}/> Exit Bay</button>
           </div>
         </header>
 
         {isLoading ? (
-           <div className="h-64 flex items-center justify-center"><Loader2 className="animate-spin text-orange-600" size={40} /></div>
+           <div className="h-64 flex flex-col items-center justify-center gap-3"><Loader2 className="animate-spin text-orange-600" size={40} /><p className="font-bold text-slate-500">Loading Workshop Data...</p></div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
             
@@ -195,7 +247,7 @@ export default function MechanicDashboard() {
             <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
               <h2 className="text-xl font-black text-slate-900 mb-6 border-b border-slate-100 pb-3 flex items-center gap-2"><Clock className="text-orange-500"/> Cars in the Workshop</h2>
               {myJobs.length === 0 ? (
-                <div className="text-center p-12 text-slate-400"><Wrench size={48} className="mx-auto mb-4 opacity-50"/> <p className="text-lg">No active cars in your bay.</p></div>
+                <div className="text-center p-12 text-slate-400"><Wrench size={48} className="mx-auto mb-4 opacity-50"/> <p className="text-lg font-medium">No active cars in your bay.</p></div>
               ) : (
                 <div className="space-y-6">
                   {myJobs.map(job => {
@@ -257,7 +309,7 @@ export default function MechanicDashboard() {
                             placeholder="Andika ugonjwa uliougundua na ulichofanya hapa..." 
                             value={diagnostics[job.id] || ''} 
                             onChange={e => setDiagnostics({...diagnostics, [job.id]: e.target.value})}
-                            className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium" 
+                            className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium transition" 
                           />
                         </div>
                         <div>
@@ -267,7 +319,7 @@ export default function MechanicDashboard() {
                             placeholder="Andika vifaa unavyohitaji kutoka stoo (kama vipo)..." 
                             value={partRequests[job.id] || ''} 
                             onChange={e => setPartRequests({...partRequests, [job.id]: e.target.value})}
-                            className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium" 
+                            className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium transition" 
                           />
                         </div>
                       </div>
@@ -277,7 +329,7 @@ export default function MechanicDashboard() {
                         <button 
                           onClick={() => handleSaveDiagnosisAndStatus(job.id, 'In Progress')}
                           disabled={isUpdating === job.id || job.status === 'Ready'}
-                          className={`flex-1 font-bold py-3 px-4 rounded-xl flex justify-center items-center gap-2 text-sm transition ${job.status === 'Ready' ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+                          className={`flex-1 font-bold py-3 px-4 rounded-xl flex justify-center items-center gap-2 text-sm transition ${job.status === 'Ready' ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-slate-800 shadow-md'}`}
                         >
                           {isUpdating === job.id ? <Loader2 size={16} className="animate-spin"/> : <Wrench size={16}/>} Save Notes & Update
                         </button>
@@ -313,14 +365,14 @@ export default function MechanicDashboard() {
               ) : (
                 <div className="space-y-4">
                   {availableJobs.map(job => (
-                    <div key={job.id} className="border border-slate-700 bg-slate-800 p-4 rounded-xl flex justify-between items-center">
+                    <div key={job.id} className="border border-slate-700 bg-slate-800 p-4 rounded-xl flex justify-between items-center hover:border-emerald-500/50 transition group">
                       <div>
-                        <h3 className="font-black text-lg uppercase text-emerald-400">{job.vehicle.plate}</h3>
+                        <h3 className="font-black text-lg uppercase text-emerald-400 group-hover:text-emerald-300 transition">{job.vehicle.plate}</h3>
                         <p className="text-sm text-slate-400 font-medium line-clamp-1">{job.serviceType}</p>
                       </div>
                       <button 
                         onClick={() => handleTakeJob(job.id)}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg transition active:scale-95"
                       >
                         Take Car
                       </button>

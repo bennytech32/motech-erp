@@ -1,13 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { 
   Users, CalendarCheck, CarFront, ShoppingCart, FileText, 
   LogOut, Search, Plus, ShieldCheck, Lock, Mail, Activity, 
   Printer, UserPlus, Wrench, AlertCircle, Loader2, CheckCircle2, 
   MessageSquare, Send, PlusCircle, Trash2, Phone, X, AlertTriangle, 
-  MapPin, PhoneCall, UserCheck, History, PackagePlus, BellRing, Eye
+  MapPin, PhoneCall, UserCheck, History, PackagePlus, BellRing, Eye,
+  ShieldAlert
 } from 'lucide-react';
+
+// ==========================================
+// UNGANISHA SUPABASE (KWA AJILI YA KULOGIN RECEPTIONIST WA ADMIN TU)
+// ==========================================
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function ReceptionDashboard() {
   // ==========================================
@@ -129,23 +138,44 @@ export default function ReceptionDashboard() {
   };
 
   // ==========================================
-  // 5. HANDLERS
+  // REAL DATABASE LOGIN (KUTOKA KWA ADMIN TU)
   // ==========================================
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
     setLoginError("");
 
-    if (loginForm.email === 'desk@motech-i.com' && loginForm.password === 'desk2026') {
-      const user = { id: 1, name: 'Sarah Frontdesk', email: 'desk@motech-i.com', role: 'Receptionist' };
-      localStorage.setItem('motech_reception', JSON.stringify(user));
-      setReceptionUser(user);
-      setIsAuthenticated(true);
-      fetchReceptionData();
-    } else {
-      setLoginError("Access Denied. Account not found or unauthorized.");
+    try {
+      // 🔴 INATAFUTA MTUMIAJI KWENYE DATABASE
+      const { data: staff, error } = await supabase
+        .from('profiles') // Hakikisha hili ndilo jina la table ambalo Admin anatumia kusave wafanyakazi
+        .select('*')
+        .eq('email', loginForm.email)
+        .eq('password', loginForm.password) // Inahakiki password
+        .single();
+
+      if (error || !staff) {
+        setLoginError("Taarifa si sahihi! Hakikisha umepewa idhini na Admin.");
+        setIsLoggingIn(false);
+        return;
+      }
+
+      // 🔴 INAHAKIKISHA KUWA HUYU NI RECEPTIONIST AU ADMIN
+      if (staff.role === 'Receptionist' || staff.role === 'Admin' || staff.role === 'Super Admin') {
+        const user = { id: staff.id, name: staff.name, email: staff.email, role: staff.role };
+        localStorage.setItem('motech_reception', JSON.stringify(user));
+        setReceptionUser(user);
+        setIsAuthenticated(true);
+        fetchReceptionData();
+      } else {
+        setLoginError("Huna idhini ya kuingia hapa. Eneo hili ni la Mapokezi pekee.");
+      }
+    } catch (err) {
+      console.error(err);
+      setLoginError("Kuna tatizo la mtandao, tafadhali jaribu tena.");
+    } finally {
+      setIsLoggingIn(false);
     }
-    setIsLoggingIn(false);
   };
 
   const handleLogout = () => {
@@ -318,13 +348,11 @@ export default function ReceptionDashboard() {
   const markInvoiceAsPaid = (invId: string) => {
     setInvoices(invoices.map(inv => {
       if(inv.id === invId) {
-        // Pia tu-update local stats (mauzo ya leo)
         setStats(prev => ({...prev, todaySales: prev.todaySales + inv.total, pendingInvoices: prev.pendingInvoices - 1}));
         return { ...inv, status: 'Paid' };
       }
       return inv;
     }));
-    // Update selected invoice preview status as well
     if(selectedInvoice && selectedInvoice.id === invId) {
        setSelectedInvoice({...selectedInvoice, status: 'Paid'});
     }
@@ -390,7 +418,7 @@ export default function ReceptionDashboard() {
   const formatTZS = (amount: number) => new Intl.NumberFormat('en-TZ', { style: 'currency', currency: 'TZS', maximumFractionDigits: 0 }).format(amount);
 
   // =========================================================================
-  // UI 1: LOGIN PAGE
+  // UI 1: LOGIN PAGE (SECURED)
   // =========================================================================
   if (!isAuthenticated) {
     return (
@@ -400,22 +428,27 @@ export default function ReceptionDashboard() {
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-blue-600/20"><Users size={32} className="text-white" /></div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">Front Desk Login</h1>
+            <p className="text-slate-500 font-medium tracking-widest uppercase text-xs mt-2">Authorized Staff Only</p>
           </div>
           <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-2xl">
-            {loginError && <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm font-bold flex items-center gap-2 border border-red-100"><AlertCircle size={18} /> {loginError}</div>}
+            {loginError && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm font-bold flex items-start gap-2 border border-red-100">
+                <ShieldAlert size={18} className="shrink-0 mt-0.5" /> <p>{loginError}</p>
+              </div>
+            )}
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Staff Email</label>
                 <div className="relative">
                   <Mail size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="email" required value={loginForm.email} onChange={e => setLoginForm({...loginForm, email: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-slate-900 font-medium" />
+                  <input type="email" required placeholder="Enter your staff email" value={loginForm.email} onChange={e => setLoginForm({...loginForm, email: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-slate-900 font-medium transition" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">Password</label>
                 <div className="relative">
                   <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="password" required value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-slate-900 font-medium" />
+                  <input type="password" required placeholder="••••••••" value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none text-slate-900 font-medium transition" />
                 </div>
               </div>
               <button type="submit" disabled={isLoggingIn} className="w-full bg-blue-600 text-white font-black text-lg py-4 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/30 flex justify-center items-center gap-2">
@@ -892,8 +925,6 @@ export default function ReceptionDashboard() {
                            <td className="p-4 font-bold text-slate-900">{booking.vehicle?.client?.name}<br/><span className="text-xs text-slate-400 font-normal">{booking.vehicle?.client?.phone}</span></td>
                            <td className="p-4 text-slate-600 font-medium">{booking.vehicle?.make} {booking.vehicle?.model}<br/><span className="text-xs text-blue-600 font-bold uppercase">{booking.vehicle?.plate}</span></td>
                            <td className="p-4 text-slate-600 font-medium">{booking.serviceType}</td>
-                           
-                           {/* MABADILIKO YA TAREHE YAPO HAPA (Umeomba nifanye modify hapa tu bila kufuta kitu) */}
                            <td className="p-4 text-slate-600 font-medium">
                              {booking.appointmentDate || booking.appointment ? (
                                <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 font-bold text-sm">
@@ -907,7 +938,6 @@ export default function ReceptionDashboard() {
                                <span className="text-slate-400 italic">N/A</span>
                              )}
                            </td>
-
                            <td className="p-4 text-right">
                               <button onClick={() => handleStatusChange(booking.id, 'In Progress')} className="bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-600 hover:text-white transition">Approve & Check-in</button>
                            </td>

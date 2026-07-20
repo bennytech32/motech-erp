@@ -6,7 +6,7 @@ import {
   Wrench, ShieldCheck, Clock, CarFront, ArrowRight, CheckCircle2, 
   MapPin, Star, Search, Calendar, Store, PlayCircle, Menu, AlertTriangle, 
   X, Award, ThumbsUp, Zap, ChevronRight, Quote, Plus, Minus, Phone, Mail, MessageCircle,
-  Smartphone, Apple, Play, AlertCircle
+  Smartphone, Apple, Play, AlertCircle, Key
 } from 'lucide-react';
 
 export default function Home() {
@@ -110,15 +110,15 @@ export default function Home() {
 
       {/* 1. NAVIGATION BAR */}
       <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200 z-50 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"> {/* Imeongezwa padding (py-4) kuruhusu logo kubwa */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center"> 
             
-            {/* Logo Halisi - IMEONGEZWA UKUBWA SANA (h-25 md:h-30) */}
+            {/* Logo Halisi */}
             <div className="flex items-center gap-3">
               <img 
                 src="/logo.png" 
                 alt="MoTECH-i Intelligent Autoworks" 
-                className="h-20 md:h-30 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-300"
+                className="h-20 md:h-24 lg:h-32 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-300"
               />
             </div>
 
@@ -133,7 +133,7 @@ export default function Home() {
 
             {/* Client Portal Button & Mobile Toggle */}
             <div className="flex items-center gap-3">
-              <Link href="/client-portal" className="hidden sm:flex bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg items-center gap-2 text-sm">
+              <Link href="/client-portal" className="hidden sm:flex bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg items-center gap-2 text-sm uppercase tracking-wider">
                 Client Portal <ArrowRight size={16} />
               </Link>
               {/* Mobile Menu Icon */}
@@ -150,18 +150,18 @@ export default function Home() {
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
           <div className="lg:hidden absolute top-[100%] left-0 w-full bg-white border-b border-slate-200 shadow-2xl p-4 flex flex-col gap-4 animate-in slide-in-from-top-4">
-            <Link onClick={() => setIsMobileMenuOpen(false)} href="#services" className="p-4 bg-slate-50 rounded-xl font-bold text-slate-800">Our Services</Link>
-            <Link onClick={() => setIsMobileMenuOpen(false)} href="/showroom" className="p-4 bg-slate-100 text-slate-900 rounded-xl font-bold flex items-center gap-2"><Store size={18}/> Premium Showroom</Link>
-            <Link onClick={() => setIsMobileMenuOpen(false)} href="/academy" className="p-4 bg-red-50 text-red-800 rounded-xl font-bold flex items-center gap-2"><PlayCircle size={18}/> MoTECH-i Academy</Link>
-            <Link onClick={() => setIsMobileMenuOpen(false)} href="/parts" className="p-4 bg-slate-50 rounded-xl font-bold text-slate-800">Genuine Spare Parts</Link>
-            <Link onClick={() => setIsMobileMenuOpen(false)} href="#contact" className="p-4 bg-slate-50 rounded-xl font-bold text-slate-800">Contact Us</Link>
-            <Link onClick={() => setIsMobileMenuOpen(false)} href="/client-portal" className="p-4 bg-slate-900 text-white rounded-xl font-bold flex justify-center items-center gap-2 mt-2">Access Client Portal <ArrowRight size={18}/></Link>
+            <Link onClick={() => setIsMobileMenuOpen(false)} href="#services" className="p-4 bg-slate-50 rounded-xl font-bold text-slate-800 uppercase tracking-wide">Our Services</Link>
+            <Link onClick={() => setIsMobileMenuOpen(false)} href="/showroom" className="p-4 bg-slate-100 text-slate-900 rounded-xl font-bold flex items-center gap-2 uppercase tracking-wide"><Store size={18}/> Premium Showroom</Link>
+            <Link onClick={() => setIsMobileMenuOpen(false)} href="/academy" className="p-4 bg-red-50 text-red-800 rounded-xl font-bold flex items-center gap-2 uppercase tracking-wide"><PlayCircle size={18}/> MoTECH-i Academy</Link>
+            <Link onClick={() => setIsMobileMenuOpen(false)} href="/parts" className="p-4 bg-slate-50 rounded-xl font-bold text-slate-800 uppercase tracking-wide">Genuine Spare Parts</Link>
+            <Link onClick={() => setIsMobileMenuOpen(false)} href="#contact" className="p-4 bg-slate-50 rounded-xl font-bold text-slate-800 uppercase tracking-wide">Contact Us</Link>
+            <Link onClick={() => setIsMobileMenuOpen(false)} href="/client-portal" className="p-4 bg-slate-900 text-white rounded-xl font-bold flex justify-center items-center gap-2 mt-2 uppercase tracking-wide">Access Client Portal <ArrowRight size={18}/></Link>
           </div>
         )}
       </nav>
 
       {/* 2. HERO SECTION */}
-      <section className="relative pt-36 pb-20 lg:pt-56 lg:pb-32 px-4 overflow-hidden flex items-center justify-center min-h-[85vh] bg-slate-900"> {/* Imeongeza pt-36 na pt-56 kufidia navbar kubwa */}
+      <section className="relative pt-36 pb-20 lg:pt-56 lg:pb-32 px-4 overflow-hidden flex items-center justify-center min-h-[85vh] bg-slate-900">
         
         {/* Slideshow */}
         {heroImages.map((image, index) => (
@@ -197,10 +197,10 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 mt-10 w-full sm:w-auto animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
-            <Link href="/book" className="bg-red-600 text-white px-8 py-4 rounded-xl font-black text-lg hover:bg-red-700 transition shadow-xl shadow-red-600/30 flex items-center justify-center gap-2">
+            <Link href="/book" className="bg-red-600 text-white px-8 py-4 rounded-xl font-black text-lg hover:bg-red-700 transition shadow-xl shadow-red-600/30 flex items-center justify-center gap-2 uppercase tracking-wide">
               Book Appointment <Calendar size={20} />
             </Link>
-            <Link href="/sos" className="bg-white/10 text-white backdrop-blur-md border border-white/20 px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition flex items-center justify-center gap-2">
+            <Link href="/sos" className="bg-white/10 text-white backdrop-blur-md border border-white/20 px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition flex items-center justify-center gap-2 uppercase tracking-wide">
               Emergency SOS <AlertTriangle size={20} className="text-red-400" />
             </Link>
           </div>
@@ -285,7 +285,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-sm font-bold text-red-600 uppercase tracking-widest mb-2">The MoTECH-i Standard</h2>
-            <h3 className="text-3xl md:text-4xl font-black text-slate-900">Why trust us with your vehicle?</h3>
+            <h3 className="text-3xl md:text-5xl font-black text-slate-900">Why trust us with your vehicle?</h3>
           </div>
 
           <div className="grid md:grid-cols-3 gap-10">
@@ -315,20 +315,20 @@ export default function Home() {
       </section>
 
       {/* 6. SHOWROOM & ACADEMY PROMO */}
-      <section className="bg-slate-100 py-16">
+      <section className="bg-slate-100 py-16 border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8">
             <Link href="/showroom" className="group bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-200 hover:border-red-300 hover:shadow-2xl transition-all duration-500 flex flex-col md:flex-row items-start md:items-center gap-8 relative overflow-hidden">
               <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition-opacity">
                 <Store size={200} />
               </div>
-              <div className="w-24 h-24 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500 relative z-10">
+              <div className="w-24 h-24 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500 relative z-10 border border-red-100">
                 <Store size={48} />
               </div>
               <div className="relative z-10">
-                <h3 className="text-3xl font-black text-slate-900 mb-3 group-hover:text-red-600 transition-colors">Car Showroom</h3>
-                <p className="text-slate-600 mb-6 text-lg">Browse and purchase premium vehicles thoroughly inspected by our experts. A choice you can trust.</p>
-                <span className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-red-700 transition">Enter Showroom <ArrowRight size={18} /></span>
+                <h3 className="text-3xl font-black text-slate-900 mb-3 group-hover:text-red-600 transition-colors tracking-tight">Car Showroom</h3>
+                <p className="text-slate-600 mb-6 text-lg leading-relaxed">Browse and purchase premium vehicles thoroughly inspected by our experts. A choice you can trust.</p>
+                <span className="inline-flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-red-600 transition uppercase tracking-wide text-sm">Enter Showroom <ArrowRight size={18} /></span>
               </div>
             </Link>
 
@@ -336,87 +336,99 @@ export default function Home() {
               <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-20 transition-opacity">
                 <PlayCircle size={200} className="text-red-500" />
               </div>
-              <div className="w-24 h-24 bg-red-600/20 text-red-400 rounded-3xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500 relative z-10">
+              <div className="w-24 h-24 bg-red-600/20 border border-red-500/30 text-red-400 rounded-3xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500 relative z-10">
                 <PlayCircle size={48} />
               </div>
               <div className="relative z-10">
-                <h3 className="text-3xl font-black text-white mb-3 group-hover:text-red-400 transition-colors">MoTECH-i Academy</h3>
-                <p className="text-slate-400 mb-6 text-lg">Master car maintenance and safety tips through our professional, easy-to-follow video tutorials.</p>
-                <span className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-red-500 transition">Watch Videos <ArrowRight size={18} /></span>
+                <h3 className="text-3xl font-black text-white mb-3 group-hover:text-red-400 transition-colors tracking-tight">MoTECH-i Academy</h3>
+                <p className="text-slate-400 mb-6 text-lg leading-relaxed">Master car maintenance and safety tips through our professional, easy-to-follow video tutorials.</p>
+                <span className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold group-hover:bg-red-500 transition uppercase tracking-wide text-sm">Watch Videos <ArrowRight size={18} /></span>
               </div>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 7. SERVICES SECTION */}
-      <section id="services" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 7. SERVICES SECTION (WITH CAR KEY PROGRAMMING ADDED) */}
+      <section id="services" className="py-24 bg-white relative">
+        {/* Background Accent */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-slate-50 skew-x-12 transform origin-top-right z-0 hidden lg:block opacity-50"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-sm font-bold text-red-600 uppercase tracking-widest mb-2">Our Expertise</h2>
-            <h3 className="text-3xl md:text-5xl font-black text-slate-900 mb-4">Professional Services</h3>
-            <p className="text-lg text-slate-600">Comprehensive automotive solutions. Select a service below to book an appointment instantly.</p>
+            <h3 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Professional Services</h3>
+            <p className="text-lg text-slate-600 leading-relaxed">Comprehensive automotive solutions. Select a service below to book an appointment instantly.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             
-            {/* CARD 1 */}
+            {/* CARD 1: General Repair */}
             <div className="flex flex-col p-8 rounded-[2rem] bg-slate-50 border border-slate-200 hover:shadow-2xl hover:border-red-200 transition-all duration-300 group h-full">
-              <div className="w-16 h-16 bg-white text-red-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform">
+              <div className="w-16 h-16 bg-white text-red-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
                 <Wrench size={32} />
               </div>
-              <h3 className="text-2xl font-black text-slate-900 mb-3">General Repair</h3>
-              <p className="text-slate-600 mb-8 flex-1 leading-relaxed">Engine tuning, brake replacement, suspension work, and complete mechanical overhauls.</p>
-              <Link href="/book" className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-4 rounded-xl hover:border-red-600 hover:text-red-600 transition-all flex justify-center items-center gap-2 shadow-sm">
-                <Calendar size={18} /> Book Service
+              <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">General Repair</h3>
+              <p className="text-slate-600 mb-8 flex-1 leading-relaxed text-sm">Engine tuning, brake replacement, suspension work, and complete mechanical overhauls.</p>
+              <Link href="/book" className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:border-red-600 hover:text-red-600 transition-all flex justify-center items-center gap-2 shadow-sm uppercase tracking-wide text-xs">
+                <Calendar size={16} /> Book Service
               </Link>
             </div>
 
-            {/* CARD 2 */}
+            {/* CARD 2: Diagnostics */}
             <div className="flex flex-col p-8 rounded-[2rem] bg-slate-50 border border-slate-200 hover:shadow-2xl hover:border-slate-900 transition-all duration-300 group h-full">
-              <div className="w-16 h-16 bg-white text-slate-900 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform">
+              <div className="w-16 h-16 bg-white text-slate-900 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
                 <ShieldCheck size={32} />
               </div>
-              <h3 className="text-2xl font-black text-slate-900 mb-3">Diagnostics</h3>
-              <p className="text-slate-600 mb-8 flex-1 leading-relaxed">Advanced OBD2 scanning, electrical system troubleshooting, and ECU programming.</p>
-              <Link href="/book" className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-4 rounded-xl hover:border-slate-900 hover:text-slate-900 transition-all flex justify-center items-center gap-2 shadow-sm">
-                <Calendar size={18} /> Book Scan
+              <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Diagnostics</h3>
+              <p className="text-slate-600 mb-8 flex-1 leading-relaxed text-sm">Advanced OBD2 scanning, electrical system troubleshooting, and ECU programming.</p>
+              <Link href="/book" className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:border-slate-900 hover:text-slate-900 transition-all flex justify-center items-center gap-2 shadow-sm uppercase tracking-wide text-xs">
+                <Calendar size={16} /> Book Scan
               </Link>
             </div>
 
-            {/* CARD 3 */}
-            <div className="flex flex-col p-8 rounded-[2rem] bg-slate-900 hover:bg-slate-800 transition-all duration-300 group h-full relative overflow-hidden shadow-xl">
-              <div className="absolute top-0 right-0 p-4 opacity-5">
-                <AlertTriangle size={150} className="text-red-500" />
+            {/* CARD 3: CAR KEY PROGRAMMING (NEW) */}
+            <div className="flex flex-col p-8 rounded-[2rem] bg-slate-50 border border-slate-200 hover:shadow-2xl hover:border-blue-500 transition-all duration-300 group h-full">
+              <div className="w-16 h-16 bg-white text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+                <Key size={32} />
               </div>
-              <div className="w-16 h-16 bg-white/10 text-red-400 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-md group-hover:scale-110 transition-transform relative z-10">
+              <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Key Programming</h3>
+              <p className="text-slate-600 mb-8 flex-1 leading-relaxed text-sm">Smart key duplication, immobilizer reprogramming, and lost key replacement for all car models.</p>
+              <Link href="/book" className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:border-blue-600 hover:text-blue-600 transition-all flex justify-center items-center gap-2 shadow-sm uppercase tracking-wide text-xs">
+                <Calendar size={16} /> Book Service
+              </Link>
+            </div>
+
+            {/* CARD 4: Maintenance & SOS */}
+            <div className="flex flex-col p-8 rounded-[2rem] bg-slate-900 hover:bg-slate-800 transition-all duration-300 group h-full relative overflow-hidden shadow-xl xl:col-span-1">
+              <div className="absolute top-0 right-0 p-4 opacity-5">
+                <AlertTriangle size={120} className="text-red-500" />
+              </div>
+              <div className="w-16 h-16 bg-white/10 text-red-400 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-md border border-white/5 group-hover:scale-110 transition-transform relative z-10">
                 <AlertTriangle size={32} />
               </div>
-              <h3 className="text-2xl font-black text-white mb-3 relative z-10">Maintenance & SOS</h3>
-              <p className="text-slate-400 mb-8 flex-1 leading-relaxed relative z-10">Routine fluid checks, plus 24/7 immediate rescue services for roadside breakdowns.</p>
-              <div className="flex flex-col xl:flex-row gap-3 relative z-10">
-                <Link href="/book" className="flex-1 bg-white/10 text-white font-bold py-4 rounded-xl hover:bg-white/20 transition-all flex justify-center items-center gap-2 text-sm">
-                  <Calendar size={16} /> Book
-                </Link>
-                <Link href="/sos" className="flex-1 bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 shadow-lg shadow-red-600/30 transition-all flex justify-center items-center gap-2 text-sm">
-                  <MapPin size={16} /> SOS
+              <h3 className="text-2xl font-black text-white mb-3 relative z-10 tracking-tight">Maintenance & SOS</h3>
+              <p className="text-slate-400 mb-8 flex-1 leading-relaxed text-sm relative z-10">Routine fluid checks, plus 24/7 immediate rescue services for roadside breakdowns.</p>
+              <div className="flex flex-col gap-3 relative z-10 mt-auto">
+                <Link href="/sos" className="w-full bg-red-600 text-white font-bold py-3.5 rounded-xl hover:bg-red-700 shadow-lg shadow-red-600/30 transition-all flex justify-center items-center gap-2 text-xs uppercase tracking-wide">
+                  <MapPin size={16} /> SOS Rescue
                 </Link>
               </div>
             </div>
 
-            {/* CARD 4 */}
-            <div className="flex flex-col p-8 rounded-[2rem] bg-red-600 border border-red-500 shadow-2xl shadow-red-600/20 group relative overflow-hidden h-full hover:bg-red-700 transition-all duration-300">
+            {/* CARD 5: Pre-Purchase */}
+            <div className="flex flex-col p-8 rounded-[2rem] bg-red-600 border border-red-500 shadow-2xl shadow-red-600/20 group relative overflow-hidden h-full hover:bg-red-700 transition-all duration-300 xl:col-span-1">
               <div className="absolute top-0 right-0 p-4 opacity-10">
-                <Search size={150} className="text-white" />
+                <Search size={120} className="text-white" />
               </div>
               <div className="relative z-10 flex flex-col h-full">
-                <div className="w-16 h-16 bg-white/20 text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform backdrop-blur-sm shadow-inner">
+                <div className="w-16 h-16 bg-white/20 text-white rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform backdrop-blur-sm shadow-inner border border-white/20">
                   <Search size={32} />
                 </div>
-                <h3 className="text-2xl font-black text-white mb-3">Pre-Purchase</h3>
-                <p className="text-red-100 mb-8 flex-1 leading-relaxed">Complete vehicle assessment before you buy. Engine, body condition, and ECU scanning.</p>
-                <Link href="/book" className="w-full bg-white text-red-700 font-black py-4 rounded-xl hover:bg-slate-50 transition-all flex justify-center items-center gap-2 shadow-lg">
-                  <Calendar size={18} /> Inspect Car
+                <h3 className="text-2xl font-black text-white mb-3 tracking-tight">Pre-Purchase</h3>
+                <p className="text-red-100 mb-8 flex-1 leading-relaxed text-sm">Complete vehicle assessment before you buy. Engine, body condition, and ECU scanning.</p>
+                <Link href="/book" className="w-full bg-white text-red-700 font-black py-3.5 rounded-xl hover:bg-slate-50 transition-all flex justify-center items-center gap-2 shadow-lg uppercase tracking-wide text-xs">
+                  <Calendar size={16} /> Inspect Car
                 </Link>
               </div>
             </div>
@@ -427,28 +439,28 @@ export default function Home() {
 
       {/* TESTIMONIALS */}
       <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1553440569-bcc63803a83d?q=80&w=2025&auto=format&fit=crop')] bg-cover bg-center opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1553440569-bcc63803a83d?q=80&w=2025&auto=format&fit=crop')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-sm font-bold text-red-400 uppercase tracking-widest mb-2">Client Success Stories</h2>
-            <h3 className="text-3xl md:text-5xl font-black mb-4">Don't just take our word for it.</h3>
+            <h3 className="text-3xl md:text-5xl font-black mb-4 tracking-tight">Don't just take our word for it.</h3>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, idx) => (
-              <div key={idx} className="bg-slate-800/50 backdrop-blur-md p-8 rounded-3xl border border-slate-700 hover:border-red-500 transition-colors">
+              <div key={idx} className="bg-slate-800/50 backdrop-blur-md p-8 rounded-3xl border border-slate-700 hover:border-red-500 hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300">
                 <div className="flex text-red-400 mb-6">
                   {[...Array(testimonial.rating)].map((_, i) => <Star key={i} size={20} fill="currentColor" />)}
                 </div>
                 <Quote size={40} className="text-slate-600 mb-4" />
                 <p className="text-slate-300 text-lg leading-relaxed mb-8 italic">"{testimonial.quote}"</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center font-bold text-lg">
+                <div className="flex items-center gap-4 border-t border-slate-700 pt-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center font-bold text-lg shadow-inner">
                     {testimonial.name.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="font-bold text-white">{testimonial.name}</h4>
-                    <p className="text-sm text-slate-400">{testimonial.role}</p>
+                    <h4 className="font-bold text-white tracking-wide">{testimonial.name}</h4>
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-0.5">{testimonial.role}</p>
                   </div>
                 </div>
               </div>
@@ -458,25 +470,25 @@ export default function Home() {
       </section>
 
       {/* FAQ */}
-      <section className="py-20 bg-slate-950 border-t border-slate-800">
+      <section className="py-24 bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-sm font-bold text-red-500 uppercase tracking-widest mb-2">Got Questions?</h2>
-            <h3 className="text-3xl md:text-4xl font-black text-white">Frequently Asked Questions</h3>
+          <div className="text-center mb-16">
+            <h2 className="text-sm font-bold text-red-600 uppercase tracking-widest mb-2">Got Questions?</h2>
+            <h3 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">Frequently Asked Questions</h3>
           </div>
 
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <div key={index} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden transition-all duration-300 hover:border-red-500">
+              <div key={index} className={`bg-slate-50 border rounded-2xl overflow-hidden transition-all duration-300 ${openFaq === index ? 'border-red-300 shadow-md' : 'border-slate-200 hover:border-slate-300'}`}>
                 <button 
                   onClick={() => setOpenFaq(openFaq === index ? null : index)}
                   className="w-full px-6 py-5 flex justify-between items-center focus:outline-none"
                 >
-                  <span className="font-bold text-lg text-white text-left">{faq.question}</span>
-                  {openFaq === index ? <Minus className="text-red-500 shrink-0" /> : <Plus className="text-slate-500 shrink-0" />}
+                  <span className={`font-bold text-lg text-left transition-colors ${openFaq === index ? 'text-red-600' : 'text-slate-800'}`}>{faq.question}</span>
+                  {openFaq === index ? <Minus className="text-red-500 shrink-0" /> : <Plus className="text-slate-400 shrink-0" />}
                 </button>
                 {openFaq === index && (
-                  <div className="px-6 pb-6 text-slate-400 leading-relaxed border-t border-slate-800 pt-4 animate-in slide-in-from-top-2">
+                  <div className="px-6 pb-6 text-slate-600 leading-relaxed pt-2 animate-in slide-in-from-top-2">
                     {faq.answer}
                   </div>
                 )}
@@ -487,139 +499,141 @@ export default function Home() {
       </section>
 
       {/* CONTACT US */}
-      <section id="contact" className="py-24 bg-white relative overflow-hidden">
+      <section id="contact" className="py-24 bg-slate-50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-red-50/50 skew-x-12 transform origin-top-right z-0 hidden lg:block"></div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-sm font-bold text-red-600 uppercase tracking-widest mb-2">Get In Touch</h2>
-            <h3 className="text-3xl md:text-5xl font-black text-slate-900">We're Here to Help</h3>
-            <p className="text-slate-600 mt-4 text-lg">Have a question or need emergency assistance? Reach out to our team through any of the channels below.</p>
+            <h3 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">We're Here to Help</h3>
+            <p className="text-slate-600 mt-4 text-lg leading-relaxed">Have a question or need emergency assistance? Reach out to our team through any of the channels below.</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Phone Card */}
-            <a href="tel:+255758406251" className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-red-300 transition-all duration-300 flex flex-col items-center text-center group">
-              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-red-600 group-hover:text-white transition-all">
+            <a href="tel:+255758406251" className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-2xl hover:border-red-300 hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center group">
+              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-6 group-hover:bg-red-600 group-hover:text-white transition-all shadow-inner border border-red-100">
                 <Phone size={28} />
               </div>
               <h4 className="text-xl font-bold text-slate-900 mb-2">Call Us</h4>
               <p className="text-slate-500 text-sm mb-4">Mon-Fri from 8am to 6pm.</p>
-              <p className="text-red-600 font-black text-lg mt-auto">+255 758 406 251</p>
+              <p className="text-red-600 font-black text-lg mt-auto tracking-wide">+255 758 406 251</p>
             </a>
 
             {/* WhatsApp Card */}
-            <a href="https://wa.me/255744588586" target="_blank" rel="noreferrer" className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-[#25D366] transition-all duration-300 flex flex-col items-center text-center group">
-              <div className="w-16 h-16 bg-[#25D366]/10 text-[#25D366] rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-[#25D366] group-hover:text-white transition-all">
+            <a href="https://wa.me/255744588586" target="_blank" rel="noreferrer" className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-2xl hover:border-[#25D366] hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center group">
+              <div className="w-16 h-16 bg-[#25D366]/10 text-[#25D366] rounded-full flex items-center justify-center mb-6 group-hover:bg-[#25D366] group-hover:text-white transition-all shadow-inner border border-[#25D366]/20">
                 <MessageCircle size={28} />
               </div>
               <h4 className="text-xl font-bold text-slate-900 mb-2">WhatsApp</h4>
               <p className="text-slate-500 text-sm mb-4">Fast responses for booking & inquiries.</p>
-              <p className="text-[#25D366] font-black text-lg mt-auto">+255 744 588 586</p>
+              <p className="text-[#25D366] font-black text-lg mt-auto tracking-wide">+255 744 588 586</p>
             </a>
 
             {/* Email Card */}
-            <a href="mailto:info@motech-i.com" className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-slate-800 transition-all duration-300 flex flex-col items-center text-center group">
-              <div className="w-16 h-16 bg-slate-100 text-slate-900 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-slate-900 group-hover:text-white transition-all">
+            <a href="mailto:info@motech-i.com" className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-2xl hover:border-slate-800 hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center group">
+              <div className="w-16 h-16 bg-slate-100 text-slate-900 rounded-full flex items-center justify-center mb-6 group-hover:bg-slate-900 group-hover:text-white transition-all shadow-inner border border-slate-200">
                 <Mail size={28} />
               </div>
               <h4 className="text-xl font-bold text-slate-900 mb-2">Email Us</h4>
               <p className="text-slate-500 text-sm mb-4">For corporate accounts & feedback.</p>
-              <p className="text-slate-900 font-black text-lg mt-auto">info@motech-i.com</p>
+              <p className="text-slate-900 font-black text-lg mt-auto tracking-wide">info@motech-i.com</p>
             </a>
 
             {/* Location Card */}
-            <a href="https://maps.google.com/?q=Makongo+Juu,+Dar+es+Salaam" target="_blank" rel="noreferrer" className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-xl hover:shadow-2xl hover:bg-slate-800 transition-all duration-300 flex flex-col items-center text-center group">
-              <div className="w-16 h-16 bg-white/10 text-white rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-all">
+            <a href="https://maps.google.com/?q=Makongo+Juu,+Dar+es+Salaam" target="_blank" rel="noreferrer" className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-xl hover:shadow-2xl hover:bg-slate-800 hover:-translate-y-1 transition-all duration-300 flex flex-col items-center text-center group">
+              <div className="w-16 h-16 bg-white/10 text-white rounded-full flex items-center justify-center mb-6 transition-all shadow-inner border border-white/20">
                 <MapPin size={28} />
               </div>
               <h4 className="text-xl font-bold text-white mb-2">Visit Garage</h4>
               <p className="text-slate-400 text-sm mb-4">Drop by our high-tech facility.</p>
-              <p className="text-white font-black text-lg mt-auto">Makongo Juu, Dar es Salaam</p>
+              <p className="text-white font-black text-lg mt-auto tracking-wide">Makongo Juu, Dar es Salaam</p>
             </a>
           </div>
         </div>
       </section>
 
       {/* ================= APP COMING SOON SECTION ================= */}
-      <section className="py-20 bg-slate-50 relative overflow-hidden border-t border-slate-200">
+      <section className="py-24 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="bg-slate-900 rounded-[3rem] p-8 md:p-16 overflow-hidden relative shadow-2xl border border-slate-800">
+          <div className="bg-gradient-to-br from-slate-900 to-slate-950 rounded-[3rem] p-8 md:p-16 overflow-hidden relative shadow-2xl border border-slate-800">
             
             {/* Glow effect */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-            <div className="grid lg:grid-cols-2 gap-12 items-center relative z-10">
+            <div className="grid lg:grid-cols-2 gap-16 items-center relative z-10">
               
               <div>
-                <div className="inline-flex items-center gap-2 bg-red-500/20 border border-red-400/30 text-red-300 px-4 py-2 rounded-full font-bold text-sm mb-6">
+                <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest mb-6">
                   <Smartphone size={16} /> Mobile App in Development
                 </div>
-                <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
-                  Garage yako, <br/>Kiganjani mwako.
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 leading-[1.1] tracking-tight">
+                  Garage yako, <br/>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-400">Kiganjani mwako.</span>
                 </h2>
-                <p className="text-slate-400 text-lg mb-8 leading-relaxed">
+                <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-xl">
                   Hivi karibuni utaweza kufuatilia matengenezo ya gari lako LIVE, kupokea taarifa za dharura, na kufanya bookings kwa urahisi zaidi kupitia MoTECH-i App.
                 </p>
                 
                 <div className="flex flex-wrap gap-4">
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 opacity-60 cursor-not-allowed">
-                    <Apple size={32} className="text-white" />
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center gap-4 opacity-50 cursor-not-allowed backdrop-blur-sm">
+                    <Apple size={36} className="text-white" />
                     <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Coming Soon on</p>
-                      <p className="text-lg font-black text-white leading-none mt-1">App Store</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Coming Soon on</p>
+                      <p className="text-xl font-black text-white leading-none">App Store</p>
                     </div>
                   </div>
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 opacity-60 cursor-not-allowed">
-                    <Play size={32} className="text-emerald-400" />
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center gap-4 opacity-50 cursor-not-allowed backdrop-blur-sm">
+                    <Play size={36} className="text-emerald-400" />
                     <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Coming Soon on</p>
-                      <p className="text-lg font-black text-white leading-none mt-1">Google Play</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Coming Soon on</p>
+                      <p className="text-xl font-black text-white leading-none">Google Play</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-center lg:justify-end relative mt-10 lg:mt-0">
-                 <div className="w-[280px] h-[580px] bg-slate-950 border-[8px] border-slate-800 rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col transform rotate-2 hover:rotate-0 transition duration-500">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-800 rounded-b-2xl z-20"></div>
+                 <div className="w-[300px] h-[600px] bg-slate-950 border-[10px] border-slate-800 rounded-[3.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col transform rotate-3 hover:rotate-0 transition duration-700">
+                    {/* Phone Notch */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-36 h-7 bg-slate-800 rounded-b-3xl z-20"></div>
                     
-                    <div className="flex-1 bg-slate-50 p-4 pt-10 flex flex-col">
+                    <div className="flex-1 bg-slate-50 p-5 pt-12 flex flex-col">
                       <div className="flex justify-between items-center mb-6">
                          <div>
                            <p className="text-xs font-bold text-slate-400">Welcome back,</p>
-                           <p className="text-sm font-black text-slate-900">John Doe</p>
+                           <p className="text-base font-black text-slate-900">John Doe</p>
                          </div>
-                         <div className="w-8 h-8 bg-red-600 rounded-full border-2 border-white shadow-sm"></div>
+                         <div className="w-10 h-10 bg-red-600 rounded-full border-2 border-white shadow-md flex items-center justify-center text-white font-bold text-sm">JD</div>
                       </div>
                       
-                      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4 relative overflow-hidden">
-                         <div className="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
-                         <p className="text-[10px] font-black text-orange-600 mb-1 tracking-widest">LIVE TRACKING</p>
-                         <h4 className="font-black text-slate-900 text-sm">Toyota Land Cruiser</h4>
-                         <div className="mt-3 flex items-center gap-2">
-                           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-4 relative overflow-hidden">
+                         <div className="absolute top-0 left-0 w-1.5 h-full bg-orange-500"></div>
+                         <p className="text-[10px] font-black text-orange-600 mb-1.5 tracking-widest flex items-center gap-1"><Zap size={10}/> LIVE TRACKING</p>
+                         <h4 className="font-black text-slate-900 text-base">Toyota Land Cruiser</h4>
+                         <div className="mt-4 flex items-center gap-3">
+                           <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                              <div className="w-[60%] h-full bg-emerald-500 rounded-full animate-pulse"></div>
                            </div>
                            <span className="text-xs font-black text-emerald-600">60%</span>
                          </div>
-                         <p className="text-[10px] font-bold text-slate-500 mt-2 flex items-center gap-1"><Wrench size={10}/> Mechanic Notes: Fixing Engine...</p>
+                         <p className="text-[11px] font-bold text-slate-500 mt-3 flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg"><Wrench size={12} className="text-slate-400"/> Mechanic: Fixing Engine...</p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-slate-100 p-3 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center">
-                          <CarFront size={20} className="text-slate-900 mb-2"/>
-                          <p className="text-[10px] font-bold text-slate-700">My Garage</p>
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200 flex flex-col items-center justify-center text-center">
+                          <CarFront size={24} className="text-slate-900 mb-2"/>
+                          <p className="text-[11px] font-bold text-slate-700">My Garage</p>
                         </div>
-                        <div className="bg-red-50 p-3 rounded-2xl border border-red-100 flex flex-col items-center justify-center text-center">
-                          <CheckCircle2 size={20} className="text-red-600 mb-2"/>
-                          <p className="text-[10px] font-bold text-slate-700">Bookings</p>
+                        <div className="bg-red-50 p-4 rounded-2xl border border-red-100 flex flex-col items-center justify-center text-center">
+                          <CheckCircle2 size={24} className="text-red-600 mb-2"/>
+                          <p className="text-[11px] font-bold text-slate-700">Bookings</p>
                         </div>
                       </div>
                       
-                      <div className="mt-auto mb-4 bg-red-600 p-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-red-600/30">
-                        <AlertCircle size={16} className="text-white"/>
-                        <p className="text-xs font-black text-white">Emergency SOS</p>
+                      <div className="mt-auto mb-2 bg-red-600 p-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-red-600/30">
+                        <AlertCircle size={18} className="text-white"/>
+                        <p className="text-sm font-black text-white tracking-wide">Emergency SOS</p>
                       </div>
 
                     </div>
@@ -632,16 +646,16 @@ export default function Home() {
       </section>
 
       {/* 8. BOTTOM CALL TO ACTION */}
-      <section className="py-20 px-4 bg-slate-50 border-t border-slate-200">
-        <div className="max-w-5xl mx-auto bg-gradient-to-br from-slate-900 to-red-900 rounded-[3rem] p-10 md:p-16 text-center shadow-2xl relative overflow-hidden">
+      <section className="py-24 px-4 bg-slate-50">
+        <div className="max-w-5xl mx-auto bg-gradient-to-br from-slate-900 via-slate-900 to-red-950 rounded-[3rem] p-10 md:p-20 text-center shadow-2xl relative overflow-hidden border border-slate-800">
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1613214149922-f1809c99b414?q=80&w=2000')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
           <div className="relative z-10">
-            <h2 className="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">Experience the Future of Auto Care.</h2>
-            <p className="text-red-100 text-lg md:text-xl max-w-2xl mx-auto mb-10">
-              Join thousands of satisfied clients who trust MoTECH-i with their vehicles. Book your first session today.
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6 tracking-tight leading-tight">Experience the Future of Auto Care.</h2>
+            <p className="text-red-100/80 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+              Join thousands of satisfied clients who trust MoTECH-i with their vehicles. Book your first session today and feel the difference.
             </p>
-            <Link href="/book" className="inline-flex items-center gap-3 bg-white text-red-700 px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 hover:shadow-xl transition-all duration-300">
-              Schedule Appointment Now <ChevronRight size={24} className="text-red-500"/>
+            <Link href="/book" className="inline-flex items-center gap-3 bg-white text-red-700 px-10 py-5 rounded-2xl font-black text-lg hover:scale-105 hover:shadow-2xl hover:shadow-red-900/50 transition-all duration-300 uppercase tracking-wide">
+              Schedule Appointment <ChevronRight size={24} className="text-red-500"/>
             </Link>
           </div>
         </div>
@@ -653,12 +667,12 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
             <div className="md:col-span-2 space-y-6">
               
-              {/* Logo Halisi (Sasa inasoma .png isiyo na background) - HII IMEACHWA KAMA ILIVYOKUWA MWANZO (h-12) */}
-              <div className="flex items-center gap-3 bg-white p-2 rounded-xl w-fit">
+              {/* Logo Halisi Kwenye Footer */}
+              <div className="flex items-center gap-3 bg-white p-3 rounded-2xl w-fit">
                 <img 
                   src="/logo.png" 
                   alt="MoTECH-i Intelligent Autoworks" 
-                  className="h-12 w-auto object-contain"
+                  className="h-14 w-auto object-contain"
                 />
               </div>
 
@@ -679,13 +693,13 @@ export default function Home() {
             <div>
               <h4 className="text-white font-black mb-6 uppercase tracking-wider text-sm">Contact & Hours</h4>
               <ul className="space-y-4 text-slate-400 font-medium">
-                <li className="flex items-center gap-2"><Phone size={16}/> +255 758 406 251</li>
-                <li className="flex items-center gap-2"><MapPin size={16}/> Makongo Juu, Dar es Salaam</li>
-                <li className="flex justify-between border-t border-slate-800 pt-3 mt-3">
-                  <span>Mon - Fri</span><span className="text-white">08:00 AM - 06:00 PM</span>
+                <li className="flex items-center gap-3"><Phone size={18} className="text-slate-500"/> +255 758 406 251</li>
+                <li className="flex items-start gap-3"><MapPin size={18} className="text-slate-500 shrink-0 mt-1"/> <span>Makongo Juu, Dar es Salaam<br/>Tanzania</span></li>
+                <li className="flex justify-between border-t border-slate-800 pt-4 mt-4">
+                  <span>Mon - Fri</span><span className="text-white font-bold">08:00 AM - 06:00 PM</span>
                 </li>
                 <li className="flex justify-between">
-                  <span>Saturday</span><span className="text-white">09:00 AM - 03:00 PM</span>
+                  <span>Saturday</span><span className="text-white font-bold">09:00 AM - 03:00 PM</span>
                 </li>
               </ul>
             </div>

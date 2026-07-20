@@ -132,7 +132,8 @@ export default function AdminDashboardPage() {
     setLoginError("");
 
     try {
-      if (loginForm.email === 'admin@motech-i.com' && loginForm.password === 'mo@2026') {
+      // 🔴 Umebadilisha Password ya Admin hapa
+      if (loginForm.email === 'admin@motech-i.com' && loginForm.password === '141400') {
         const masterAdmin = { id: 0, name: 'Master Admin', email: 'admin@motech-i.com', role: 'Super Admin' };
         localStorage.setItem('motech_admin', JSON.stringify(masterAdmin));
         setAdminUser(masterAdmin);
@@ -219,6 +220,8 @@ export default function AdminDashboardPage() {
   };
 
 
+  // --- STAFF (USERS) HANDLERS ---
+  // Hizi kazi sasa zinafanywa na Admin tu
   const handleAddStaff = (e: React.FormEvent) => {
     e.preventDefault();
     const newId = staffMembers.length ? Math.max(...staffMembers.map(s => s.id)) + 1 : 1;
@@ -226,8 +229,14 @@ export default function AdminDashboardPage() {
     setIsAddStaffOpen(false);
     setNewStaff({ name: '', contact: '', role: 'Mechanic', password: '' });
   };
-  const handleDeleteStaff = (id: number) => setStaffMembers(staffMembers.filter(staff => staff.id !== id));
+  
+  const handleDeleteStaff = (id: number) => {
+      if(confirm("Unataka kumfuta huyu mtumiaji kwenye mfumo?")){
+         setStaffMembers(staffMembers.filter(staff => staff.id !== id));
+      }
+  };
 
+  // --- SPARE PARTS HANDLERS ---
   const handleAddSpare = (e: React.FormEvent) => {
     e.preventDefault();
     const newId = spareParts.length ? Math.max(...spareParts.map(s => s.id)) + 1 : 1;
@@ -240,6 +249,7 @@ export default function AdminDashboardPage() {
   };
   const handleDeleteSpare = (id: number) => setSpareParts(spareParts.filter(part => part.id !== id));
 
+  // --- SHOWROOM HANDLERS ---
   const resetShowroomForm = () => {
     setNewShowroomCar({ 
       name: '', brand: 'Toyota', price: '', year: '', bodyType: 'SUV', 
@@ -886,6 +896,7 @@ export default function AdminDashboardPage() {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-bold text-slate-800">Staff Management</h3>
+                  {/* Kitufe hiki sasa kinafanya kazi kwa admin pekee */}
                   <button onClick={() => setIsAddStaffOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 flex items-center gap-2 text-sm shadow-md"><Plus size={16} /> Add Staff</button>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -908,6 +919,7 @@ export default function AdminDashboardPage() {
                             <td className="p-4 text-slate-600">{staff.contact}</td>
                             <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">{staff.role}</span></td>
                             <td className="p-4 flex justify-end gap-2">
+                              {/* Option ya kufuta imewekwa alert ya kuthibitisha kufuta */}
                               <button onClick={() => handleDeleteStaff(staff.id)} className="p-2 text-slate-400 hover:text-red-600 bg-white rounded shadow-sm border border-slate-200"><Trash2 size={16}/></button>
                             </td>
                           </tr>
