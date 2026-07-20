@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { 
@@ -90,12 +92,11 @@ export default function MechanicDashboard() {
 
     try {
       // 🔴 INATAFUTA MTUMIAJI KWENYE DATABASE YA 'profiles' au 'staff'
-      // Hakikisha jina la table (profiles) linaendana na kule Admin anapotengeneza Staff.
       const { data: staff, error } = await supabase
-        .from('profiles') // Unaweza kubadilisha iwe 'staff' kama Admin anasave kwenye table ya staff
+        .from('profiles') 
         .select('*')
         .eq('email', loginForm.email)
-        .eq('password', loginForm.password) // Hapa inahakiki password
+        .eq('password', loginForm.password) 
         .single();
 
       if (error || !staff) {
