@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { User, Car, Phone, Mail, CalendarDays, Loader2, CheckCircle2, ArrowRight, Home } from 'lucide-react'; 
+import { User, Car, Phone, Mail, CalendarDays, Loader2, CheckCircle2, ArrowRight, Home, Wrench } from 'lucide-react'; 
 
 export default function BookServicePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,7 +28,8 @@ export default function BookServicePage() {
       model: formData.get('model'),
       plate: formData.get('plate'),
       issue: formData.get('issue'),
-      serviceType: 'Online Booking' 
+      // Tumesoma aina ya service aliyochagua mteja hapa
+      serviceType: formData.get('serviceType') || 'Online Booking' 
     };
 
     try {
@@ -168,6 +169,25 @@ export default function BookServicePage() {
               Vehicle Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* === IMEONGEZWA HAPA: SERVICE TYPE === */}
+              <div className="space-y-2 col-span-1 md:col-span-2">
+                <label className="block text-sm font-bold text-slate-700">Requested Service Type *</label>
+                <div className="relative">
+                  <Wrench className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                  <select name="serviceType" required className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-bold transition-all text-slate-700 appearance-none cursor-pointer">
+                    <option value="" disabled selected>Select the service you need...</option>
+                    <option value="General Repair">⚙️ General Repair & Mechanics</option>
+                    <option value="Diagnostics">💻 Computer Diagnostics & Scan</option>
+                    <option value="Key Programming">🔑 Car Key Programming & Duplication</option>
+                    <option value="Maintenance">🔧 Routine Maintenance / Service</option>
+                    <option value="Pre-Purchase">🔍 Pre-Purchase Inspection</option>
+                    <option value="Other">❓ Other / Not Sure</option>
+                  </select>
+                </div>
+              </div>
+              {/* ================================== */}
+
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-slate-700">Make (Brand) *</label>
                 <input name="make" type="text" placeholder="e.g Toyota" required className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-medium transition-all" />
@@ -181,8 +201,8 @@ export default function BookServicePage() {
                 <input name="plate" type="text" placeholder="e.g T 123 ABC" required className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-medium uppercase transition-all" />
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-slate-700">Reported Issue</label>
-                <input name="issue" type="text" placeholder="Describe the problem..." required className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-medium transition-all" />
+                <label className="block text-sm font-bold text-slate-700">Describe the Issue (Optional)</label>
+                <input name="issue" type="text" placeholder="E.g. Brake noise, needs oil change..." className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-medium transition-all" />
               </div>
             </div>
           </div>
