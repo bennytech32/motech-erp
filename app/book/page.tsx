@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import { User, Car, Phone, Mail, CalendarDays, Loader2, CheckCircle2, ArrowRight, Home, Wrench } from 'lucide-react'; 
+import { User, Car, Phone, Mail, CalendarDays, Loader2, CheckCircle2, ArrowRight, Home, Wrench, MapPin } from 'lucide-react'; 
 
 export default function BookServicePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [customerName, setCustomerName] = useState(''); 
+  const [countryCode, setCountryCode] = useState('+255');
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -19,17 +20,25 @@ export default function BookServicePage() {
     const name = formData.get('name') as string;
     setCustomerName(name);
 
+    // Unganisha Country Code na Namba ya Simu
+    const rawPhone = formData.get('phone') as string;
+    const fullPhoneNumber = `${countryCode} ${rawPhone.replace(/^0+/, '')}`;
+
+    // Unganisha Branch kwenye Service Type ili Receptionist ajue ni tawi gani
+    const selectedBranch = formData.get('branch') as string;
+    const rawServiceType = formData.get('serviceType') as string;
+    const finalServiceType = `${rawServiceType} (${selectedBranch} Branch)`;
+
     const payload = {
       name,
-      phone: formData.get('phone'),
+      phone: fullPhoneNumber,
       email: formData.get('email'),
       appointment: formData.get('date'), 
       make: formData.get('make'),
       model: formData.get('model'),
       plate: formData.get('plate'),
       issue: formData.get('issue'),
-      // Tumesoma aina ya service aliyochagua mteja hapa
-      serviceType: formData.get('serviceType') || 'Online Booking' 
+      serviceType: finalServiceType 
     };
 
     try {
@@ -106,7 +115,6 @@ export default function BookServicePage() {
             </div>
           </div>
           
-          {/* NAMBA HALISI YA OFISI IMEREKEBISHWA HAPA 👇 */}
           <p className="text-slate-400 text-sm font-medium">
             Need help? Contact us at <span className="text-slate-600 font-bold">+255 758 406 251</span>
           </p>
@@ -137,13 +145,36 @@ export default function BookServicePage() {
                 <label className="block text-sm font-bold text-slate-700">Full Name *</label>
                 <input name="name" type="text" placeholder="e.g John Doe" required className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-medium transition-all" />
               </div>
+              
+              {/* SEHEMU YA SIMU ILIYOREKEBISHWA YENYE COUNTRY CODE */}
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-slate-700">Phone Number *</label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-                  <input name="phone" type="tel" placeholder="e.g +255 758 406 251" required className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-medium transition-all" />
+                <div className="flex relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10 pointer-events-none">
+                    <Phone className="h-5 w-5" />
+                  </div>
+                  <select 
+                    value={countryCode} 
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className="pl-10 pr-2 py-3.5 bg-slate-100 border border-slate-200 rounded-l-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-bold text-slate-700 transition-all border-r-0 z-0 cursor-pointer"
+                  >
+                    <option value="+255">🇹🇿 +255</option>
+                    <option value="+254">🇰🇪 +254</option>
+                    <option value="+256">🇺🇬 +256</option>
+                    <option value="+250">🇺🇬 +250</option>
+                    <option value="+257">🇧🇮 +257</option>
+                    <option value="+243">🇧🇮 +243</option>
+                  </select>
+                  <input 
+                    name="phone" 
+                    type="tel" 
+                    placeholder="758 406 251" 
+                    required 
+                    className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-r-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-medium transition-all" 
+                  />
                 </div>
               </div>
+
               <div className="space-y-2">
                 <label className="block text-sm font-bold text-slate-700">Email (Optional)</label>
                 <div className="relative">
@@ -170,19 +201,32 @@ export default function BookServicePage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* === IMEONGEZWA HAPA: SERVICE TYPE === */}
-              <div className="space-y-2 col-span-1 md:col-span-2">
+              {/* SERVICE TYPE */}
+              <div className="space-y-2 col-span-1">
                 <label className="block text-sm font-bold text-slate-700">Requested Service Type *</label>
                 <div className="relative">
                   <Wrench className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
-                  <select name="serviceType" required className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-bold transition-all text-slate-700 appearance-none cursor-pointer">
-                    <option value="" disabled selected>Select the service you need...</option>
+                  <select name="serviceType" required defaultValue="" className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-bold transition-all text-slate-700 appearance-none cursor-pointer">
+                    <option value="" disabled>Select the service you need...</option>
                     <option value="General Repair">⚙️ General Repair & Mechanics</option>
                     <option value="Diagnostics">💻 Computer Diagnostics & Scan</option>
                     <option value="Key Programming">🔑 Car Key Programming & Duplication</option>
                     <option value="Maintenance">🔧 Routine Maintenance / Service</option>
                     <option value="Pre-Purchase">🔍 Pre-Purchase Inspection</option>
                     <option value="Other">❓ Other / Not Sure</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* === IMEONGEZWA HAPA: BRANCH LOCATION === */}
+              <div className="space-y-2 col-span-1">
+                <label className="block text-sm font-bold text-slate-700">Select Branch Location *</label>
+                <div className="relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5" />
+                  <select name="branch" required defaultValue="" className="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-red-600 focus:bg-white font-bold transition-all text-slate-700 appearance-none cursor-pointer">
+                    <option value="" disabled>Choose your preferred garage...</option>
+                    <option value="Dar es Salaam">📍 Dar es Salaam Branch (HQ)</option>
+                    <option value="Arusha">📍 Arusha Branch</option>
                   </select>
                 </div>
               </div>
